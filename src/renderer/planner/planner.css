@@ -81,12 +81,12 @@ body {
 
 .board {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   padding: 16px 24px;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .board {
     grid-template-columns: 1fr;
   }

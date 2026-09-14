@@ -1,7 +1,9 @@
 const listToday = document.getElementById('listToday');
 const listProcess = document.getElementById('listProcess');
+const listDone = document.getElementById('listDone');
 const countToday = document.getElementById('countToday');
 const countProcess = document.getElementById('countProcess');
+const countDone = document.getElementById('countDone');
 const hint = document.getElementById('hint');
 
 let tasks = [];
@@ -12,13 +14,8 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-function renderColumn(listEl, countEl, category) {
-  const items = tasks
-    .filter((t) => t.category === category)
-    .sort((a, b) => {
-      if (a.status !== b.status) return a.status === 'done' ? 1 : -1;
-      return new Date(a.created_at) - new Date(b.created_at);
-    });
+function renderColumn(listEl, countEl, filterFn, sortFn) {
+  const items = tasks.filter(filterFn).sort(sortFn);
 
   countEl.textContent = String(items.length);
   listEl.innerHTML = '';
@@ -34,6 +31,14 @@ function renderColumn(listEl, countEl, category) {
   for (const task of items) {
     listEl.appendChild(renderTaskItem(task));
   }
+}
+
+function byCreatedAtAsc(a, b) {
+  return new Date(a.created_at) - new Date(b.created_at);
+}
+
+function byUpdatedAtDesc(a, b) {
+  return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
 }
 
 function renderTaskItem(task) {
@@ -81,13 +86,21 @@ function renderTaskItem(task) {
     body.appendChild(renderStepList(task));
   }
 
-  if (task.source === 'screenshot') {
+  if (task.source === 'screenshot' || task.status === 'done') {
     const meta = document.createElement('div');
     meta.className = 'task-meta';
-    const badge = document.createElement('span');
-    badge.className = 'badge';
-    badge.textContent = '📸 per Screenshot erkannt';
-    meta.appendChild(badge);
+    if (task.status === 'done') {
+      const categoryBadge = document.createElement('span');
+      categoryBadge.className = 'badge';
+      categoryBadge.textContent = task.category === 'process' ? '🔁 Prozess' : '☀️ Heute';
+      meta.appendChild(categoryBadge);
+    }
+    if (task.source === 'screenshot') {
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = '📸 per Screenshot erkannt';
+      meta.appendChild(badge);
+    }
     body.appendChild(meta);
   }
 
@@ -225,8 +238,9 @@ function renderStepList(task) {
 }
 
 function renderAll() {
-  renderColumn(listToday, countToday, 'today');
-  renderColumn(listProcess, countProcess, 'process');
+  renderColumn(listToday, countToday, (t) => t.category === 'today' && t.status !== 'done', byCreatedAtAsc);
+  renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done', byCreatedAtAsc);
+  renderColumn(listDone, countDone, (t) => t.status === 'done', byUpdatedAtDesc);
 }
 
 async function loadTasks() {

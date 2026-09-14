@@ -226,6 +226,14 @@
         <ul class="task-list" id="listProcess"></ul>
       </section>
 
+      <section class="section">
+        <div class="section-header">
+          <h2>Erledigt</h2>
+          <span class="count" id="countDone">0</span>
+        </div>
+        <ul class="task-list" id="listDone"></ul>
+      </section>
+
       <p class="hint" id="hint"></p>
     </main>
 
@@ -253,8 +261,10 @@
 
       const listToday = document.getElementById('listToday');
       const listProcess = document.getElementById('listProcess');
+      const listDone = document.getElementById('listDone');
       const countToday = document.getElementById('countToday');
       const countProcess = document.getElementById('countProcess');
+      const countDone = document.getElementById('countDone');
       const hint = document.getElementById('hint');
       const settingsDialog = document.getElementById('settingsDialog');
       const settingsForm = document.getElementById('settingsForm');
@@ -326,13 +336,8 @@
         return text ? JSON.parse(text) : null;
       }
 
-      function renderColumn(listEl, countEl, category) {
-        const items = tasks
-          .filter((t) => t.category === category)
-          .sort((a, b) => {
-            if (a.status !== b.status) return a.status === 'done' ? 1 : -1;
-            return new Date(a.created_at) - new Date(b.created_at);
-          });
+      function renderColumn(listEl, countEl, filterFn, sortFn) {
+        const items = tasks.filter(filterFn).sort(sortFn);
 
         countEl.textContent = String(items.length);
         listEl.innerHTML = '';
@@ -345,6 +350,14 @@
           return;
         }
         for (const task of items) listEl.appendChild(renderTaskItem(task));
+      }
+
+      function byCreatedAtAsc(a, b) {
+        return new Date(a.created_at) - new Date(b.created_at);
+      }
+
+      function byUpdatedAtDesc(a, b) {
+        return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
       }
 
       function renderDescription(task) {
@@ -467,6 +480,12 @@
 
         if (task.category === 'process') body.appendChild(renderStepList(task));
 
+        if (task.status === 'done') {
+          const categoryBadge = document.createElement('span');
+          categoryBadge.className = 'badge';
+          categoryBadge.textContent = task.category === 'process' ? '🔁 Prozess' : '☀️ Heute';
+          body.appendChild(categoryBadge);
+        }
         if (task.source === 'screenshot') {
           const badge = document.createElement('span');
           badge.className = 'badge';
@@ -486,8 +505,9 @@
       }
 
       function renderAll() {
-        renderColumn(listToday, countToday, 'today');
-        renderColumn(listProcess, countProcess, 'process');
+        renderColumn(listToday, countToday, (t) => t.category === 'today' && t.status !== 'done', byCreatedAtAsc);
+        renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done', byCreatedAtAsc);
+        renderColumn(listDone, countDone, (t) => t.status === 'done', byUpdatedAtDesc);
       }
 
       async function loadTasks() {

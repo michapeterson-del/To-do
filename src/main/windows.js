@@ -25,9 +25,9 @@ function createPlannerWindow() {
     return plannerWindow;
   }
   plannerWindow = new BrowserWindow({
-    width: 920,
-    height: 700,
-    minWidth: 640,
+    width: 1100,
+    height: 720,
+    minWidth: 760,
     minHeight: 480,
     title: 'Aufgabenplaner',
     icon: APP_ICON_PATH,
