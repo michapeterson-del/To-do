@@ -45,15 +45,27 @@ window.api.capture.onError((message) => {
   showView('error');
 });
 
-resultView.addEventListener('submit', (e) => {
+const saveErrorText = document.getElementById('saveErrorText');
+
+resultView.addEventListener('submit', async (e) => {
   e.preventDefault();
   const title = titleInput.value.trim();
   if (!title) return;
-  window.api.capture.submit({
-    title,
-    description: descriptionInput.value.trim(),
-    category: currentCategory,
-  });
+  const submitBtn = resultView.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  saveErrorText.hidden = true;
+  try {
+    await window.api.capture.submit({
+      title,
+      description: descriptionInput.value.trim(),
+      category: currentCategory,
+    });
+  } catch (err) {
+    saveErrorText.textContent = `Speichern fehlgeschlagen: ${err.message || err}`;
+    saveErrorText.hidden = false;
+  } finally {
+    submitBtn.disabled = false;
+  }
 });
 
 document.getElementById('discardBtn').addEventListener('click', () => {
