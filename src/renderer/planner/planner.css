@@ -191,32 +191,93 @@ body {
   word-break: break-word;
 }
 
-.step-field {
+.step-list {
+  margin-top: 6px;
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
   gap: 6px;
-  margin-top: 4px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  border-left: 2px solid transparent;
   font-size: 12px;
 }
 
-.step-label {
-  flex-shrink: 0;
-  color: var(--text-muted);
-  font-weight: 600;
+.step:hover {
+  background: var(--bg);
 }
 
-.step-value {
+.step.next {
+  border-left-color: var(--accent);
+  background: rgba(79, 70, 229, 0.08);
+}
+
+.step.done .step-text {
+  text-decoration: line-through;
+  color: var(--done);
+}
+
+.step input[type='checkbox'] {
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.step-text {
+  flex: 1;
   outline: none;
   word-break: break-word;
-  flex: 1;
 }
 
-.step-value.empty {
+.step-delete {
+  border: none;
+  background: transparent;
   color: var(--text-muted);
-  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  opacity: 0;
 }
 
-.step-value.empty::before {
-  content: attr(data-placeholder);
+.step:hover .step-delete {
+  opacity: 1;
+}
+
+.step-delete:hover {
+  color: var(--danger);
+}
+
+.add-step-form {
+  margin-top: 3px;
+}
+
+.add-step-form input {
+  width: 100%;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+
+.add-step-form input:focus {
+  color: var(--text);
+  border-style: solid;
+  border-color: var(--accent);
+  outline: none;
 }
 
 .task-meta {

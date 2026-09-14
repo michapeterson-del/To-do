@@ -43,8 +43,7 @@ async function createTask(config, task) {
     category: task.category === 'process' ? 'process' : 'today',
     status: 'open',
     source: task.source === 'screenshot' ? 'screenshot' : 'manual',
-    last_steps: task.last_steps || '',
-    next_steps: task.next_steps || '',
+    steps: Array.isArray(task.steps) ? task.steps : [],
   };
   const result = await request(config, 'POST', 'tasks', payload, 'return=representation');
   return Array.isArray(result) ? result[0] : result;

@@ -83,8 +83,7 @@ function renderTaskItem(task) {
   }
 
   if (task.category === 'process') {
-    body.appendChild(renderStepField(task, 'last_steps', 'Bisher', 'Bisherige Schritte eintragen...'));
-    body.appendChild(renderStepField(task, 'next_steps', 'Nächste', 'Nächste Schritte eintragen...'));
+    body.appendChild(renderStepList(task));
   }
 
   if (task.source === 'screenshot') {
@@ -109,44 +108,90 @@ function renderTaskItem(task) {
   return li;
 }
 
-function renderStepField(task, field, label, placeholder) {
+function renderStepList(task) {
+  const steps = Array.isArray(task.steps) ? task.steps : [];
+  let nextMarked = false;
+
   const wrap = document.createElement('div');
-  wrap.className = 'step-field';
+  wrap.className = 'step-list';
 
-  const labelEl = document.createElement('span');
-  labelEl.className = 'step-label';
-  labelEl.textContent = `${label}:`;
+  const ul = document.createElement('ul');
+  ul.className = 'steps';
 
-  const value = document.createElement('div');
-  value.className = 'step-value';
-  value.contentEditable = 'true';
-  value.spellcheck = false;
-  value.textContent = task[field] || '';
-  value.dataset.placeholder = placeholder;
-  value.classList.toggle('empty', !task[field]);
-
-  value.addEventListener('focus', () => {
-    value.classList.remove('empty');
-  });
-  value.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      value.blur();
-    } else if (e.key === 'Escape') {
-      value.textContent = task[field] || '';
-      value.blur();
+  for (const step of steps) {
+    const li = document.createElement('li');
+    li.className = 'step' + (step.done ? ' done' : '');
+    if (!step.done && !nextMarked) {
+      li.classList.add('next');
+      nextMarked = true;
     }
-  });
-  value.addEventListener('blur', () => {
-    const text = value.textContent.trim();
-    value.classList.toggle('empty', !text);
-    if (text !== (task[field] || '')) {
-      updateTask(task.id, { [field]: text });
-    }
-  });
 
-  wrap.appendChild(labelEl);
-  wrap.appendChild(value);
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = !!step.done;
+    checkbox.addEventListener('change', () => {
+      const updated = steps.map((s) => (s.id === step.id ? { ...s, done: checkbox.checked } : s));
+      updateTask(task.id, { steps: updated });
+    });
+
+    const text = document.createElement('span');
+    text.className = 'step-text';
+    text.contentEditable = 'true';
+    text.spellcheck = false;
+    text.textContent = step.text;
+    text.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        text.blur();
+      } else if (e.key === 'Escape') {
+        text.textContent = step.text;
+        text.blur();
+      }
+    });
+    text.addEventListener('blur', () => {
+      const value = text.textContent.trim();
+      if (value && value !== step.text) {
+        const updated = steps.map((s) => (s.id === step.id ? { ...s, text: value } : s));
+        updateTask(task.id, { steps: updated });
+      } else {
+        text.textContent = step.text;
+      }
+    });
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'step-delete';
+    del.textContent = '×';
+    del.title = 'Schritt entfernen';
+    del.addEventListener('click', () => {
+      const updated = steps.filter((s) => s.id !== step.id);
+      updateTask(task.id, { steps: updated });
+    });
+
+    li.appendChild(checkbox);
+    li.appendChild(text);
+    li.appendChild(del);
+    ul.appendChild(li);
+  }
+  wrap.appendChild(ul);
+
+  const form = document.createElement('form');
+  form.className = 'add-step-form';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.maxLength = 200;
+  input.placeholder = '+ Schritt hinzufügen';
+  form.appendChild(input);
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const value = input.value.trim();
+    if (!value) return;
+    const updated = [...steps, { id: `s${Date.now()}`, text: value, done: false }];
+    updateTask(task.id, { steps: updated });
+    input.value = '';
+  });
+  wrap.appendChild(form);
+
   return wrap;
 }
 
@@ -174,8 +219,7 @@ async function addTask(category, title) {
     category,
     status: 'open',
     source: 'manual',
-    last_steps: '',
-    next_steps: '',
+    steps: [],
     created_at: new Date().toISOString(),
   };
   tasks.push(optimistic);

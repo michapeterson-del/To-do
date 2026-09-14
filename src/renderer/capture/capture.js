@@ -5,9 +5,6 @@ const resultView = document.getElementById('resultView');
 const titleInput = document.getElementById('titleInput');
 const descriptionInput = document.getElementById('descriptionInput');
 const categoryToggle = document.getElementById('categoryToggle');
-const processFields = document.getElementById('processFields');
-const lastStepsInput = document.getElementById('lastStepsInput');
-const nextStepsInput = document.getElementById('nextStepsInput');
 
 let currentCategory = 'today';
 
@@ -22,7 +19,6 @@ function setCategory(category) {
   categoryToggle.querySelectorAll('.cat-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.category === currentCategory);
   });
-  processFields.hidden = currentCategory !== 'process';
 }
 
 categoryToggle.querySelectorAll('.cat-btn').forEach((btn) => {
@@ -38,8 +34,6 @@ window.api.capture.onAnalyzing(() => {
 window.api.capture.onResult((draft) => {
   titleInput.value = draft.title || '';
   descriptionInput.value = draft.description || '';
-  lastStepsInput.value = '';
-  nextStepsInput.value = '';
   setCategory(draft.category);
   showView('result');
   titleInput.focus();
@@ -55,16 +49,11 @@ resultView.addEventListener('submit', (e) => {
   e.preventDefault();
   const title = titleInput.value.trim();
   if (!title) return;
-  const draft = {
+  window.api.capture.submit({
     title,
     description: descriptionInput.value.trim(),
     category: currentCategory,
-  };
-  if (currentCategory === 'process') {
-    draft.last_steps = lastStepsInput.value.trim();
-    draft.next_steps = nextStepsInput.value.trim();
-  }
-  window.api.capture.submit(draft);
+  });
 });
 
 document.getElementById('discardBtn').addEventListener('click', () => {

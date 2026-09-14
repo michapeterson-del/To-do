@@ -134,9 +134,7 @@ body {
 }
 
 #titleInput,
-#descriptionInput,
-#lastStepsInput,
-#nextStepsInput {
+#descriptionInput {
   width: 100%;
   padding: 8px 10px;
   border-radius: 9px;
@@ -149,9 +147,7 @@ body {
 }
 
 #titleInput:focus,
-#descriptionInput:focus,
-#lastStepsInput:focus,
-#nextStepsInput:focus {
+#descriptionInput:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
@@ -178,21 +174,6 @@ body {
   border-color: var(--accent);
   color: var(--accent-contrast);
   font-weight: 600;
-}
-
-.process-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px;
-  margin-top: 2px;
-  border-radius: 10px;
-  background: var(--surface);
-  border: 1px dashed var(--border);
-}
-
-.process-fields[hidden] {
-  display: none;
 }
 
 .row {
