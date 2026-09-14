@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Aufgabe erfassen</title>
+    <link rel="stylesheet" href="capture.css" />
+  </head>
+  <body>
+    <div class="card">
+      <div class="drag-bar">
+        <span>Aufgabe erfassen</span>
+        <button id="closeBtn" class="icon-btn" title="Verwerfen (Esc)">✕</button>
+      </div>
+
+      <div id="analyzingView" class="view">
+        <div class="spinner"></div>
+        <p>Screenshot wird analysiert...</p>
+      </div>
+
+      <div id="errorView" class="view" hidden>
+        <p class="error-text" id="errorText"></p>
+        <div class="row">
+          <button id="retryBtn" class="btn btn-primary">Erneut versuchen</button>
+          <button id="cancelErrorBtn" class="btn btn-ghost">Schliessen</button>
+        </div>
+      </div>
+
+      <form id="resultView" class="view" hidden>
+        <label class="field-label" for="titleInput">Titel</label>
+        <input id="titleInput" type="text" maxlength="200" required />
+
+        <label class="field-label" for="descriptionInput">Notiz</label>
+        <textarea id="descriptionInput" rows="3" maxlength="1000"></textarea>
+
+        <div class="category-toggle" id="categoryToggle">
+          <button type="button" class="cat-btn" data-category="today">Heute</button>
+          <button type="button" class="cat-btn" data-category="process">Prozess/Optimierung</button>
+        </div>
+
+        <div class="row">
+          <button type="submit" class="btn btn-primary">Speichern</button>
+          <button type="button" id="discardBtn" class="btn btn-ghost">Verwerfen</button>
+        </div>
+        <p class="hint-small">Speichern: Strg/Cmd+Enter &middot; Verwerfen: Esc</p>
+      </form>
+    </div>
+    <script src="capture.js"></script>
+  </body>
+</html>

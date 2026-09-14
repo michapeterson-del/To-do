@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Aufgabenplaner</title>
+    <link rel="stylesheet" href="planner.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>Aufgabenplaner</h1>
+      <div class="actions">
+        <button id="captureBtn" class="btn btn-primary" title="Screenshot analysieren und Aufgabe erfassen">
+          📸 Aufgabe jetzt erfassen
+        </button>
+        <button id="refreshBtn" class="btn btn-ghost" title="Aktualisieren">⟳</button>
+        <button id="settingsBtn" class="btn btn-ghost" title="Einstellungen">⚙</button>
+      </div>
+    </header>
+
+    <main class="board">
+      <section class="column" data-category="today">
+        <div class="column-header">
+          <h2>Heute</h2>
+          <span class="count" id="countToday">0</span>
+        </div>
+        <form class="add-form" data-category="today">
+          <input type="text" placeholder="Neue Aufgabe fuer heute..." maxlength="200" required />
+        </form>
+        <ul class="task-list" id="listToday"></ul>
+      </section>
+
+      <section class="column" data-category="process">
+        <div class="column-header">
+          <h2>Prozesse &amp; Optimierungen</h2>
+          <span class="count" id="countProcess">0</span>
+        </div>
+        <form class="add-form" data-category="process">
+          <input type="text" placeholder="Neue Prozess-/Optimierungsidee..." maxlength="200" required />
+        </form>
+        <ul class="task-list" id="listProcess"></ul>
+      </section>
+    </main>
+
+    <p class="hint" id="hint"></p>
+
+    <script src="planner.js"></script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+out/
+*.log
+.DS_Store
+
+# Lokale App-Einstellungen (API-Keys etc.) werden im Electron userData-Ordner
+# gespeichert, NICHT im Projektordner - trotzdem zur Sicherheit ausgeschlossen:
+config.json
+.env

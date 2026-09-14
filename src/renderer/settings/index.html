@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Einstellungen</title>
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <h1>Einstellungen</h1>
+
+    <form id="settingsForm">
+      <fieldset>
+        <legend>Supabase (Cloud-Speicher)</legend>
+        <label for="supabaseUrl">Projekt-URL</label>
+        <input id="supabaseUrl" type="text" placeholder="https://xxxx.supabase.co" />
+
+        <label for="supabaseAnonKey">Anon Public Key</label>
+        <input id="supabaseAnonKey" type="password" placeholder="eyJhbGciOi..." />
+        <p class="help">
+          Projekt auf supabase.com anlegen, das SQL aus <code>supabase/schema.sql</code>
+          im SQL-Editor ausfuehren, dann URL &amp; anon key unter
+          Project Settings &rarr; API kopieren.
+        </p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Claude (Bildschirm-Analyse)</legend>
+        <label for="anthropicApiKey">Anthropic API-Key</label>
+        <input id="anthropicApiKey" type="password" placeholder="sk-ant-..." />
+
+        <label for="claudeModel">Modell</label>
+        <input id="claudeModel" type="text" placeholder="claude-sonnet-5" />
+        <p class="help">API-Key erstellen unter console.anthropic.com.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Tastenkuerzel</legend>
+        <label for="hotkey">Globales Tastenkuerzel</label>
+        <input id="hotkey" type="text" placeholder="CommandOrControl+Shift+T" />
+        <p class="help">
+          Electron-Accelerator-Syntax, z.B. <code>CommandOrControl+Shift+T</code>.
+          Loest von ueberall auf dem PC eine Bildschirm-Erfassung aus.
+        </p>
+      </fieldset>
+
+      <p class="help">
+        macOS: Fuer die Bildschirm-Erfassung muss der App unter Systemeinstellungen
+        &rarr; Datenschutz &amp; Sicherheit &rarr; Bildschirmaufnahme Zugriff erlaubt werden.
+      </p>
+
+      <div class="row">
+        <button type="submit" class="btn btn-primary">Speichern</button>
+      </div>
+      <p id="status" class="status"></p>
+    </form>
+
+    <script src="settings.js"></script>
+  </body>
+</html>

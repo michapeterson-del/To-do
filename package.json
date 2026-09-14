@@ -1,0 +1,14 @@
+{
+  "name": "todo-planner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Persoenlicher Aufgabenplaner: Aufgaben fuer heute, Prozess-Optimierungen und KI-gestuetzte Bildschirm-Erfassung per Tastenkuerzel",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "icons": "node scripts/generate-icons.js"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0"
+  }
+}
