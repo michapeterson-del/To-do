@@ -189,6 +189,23 @@ body {
   color: var(--text-muted);
   margin-top: 2px;
   word-break: break-word;
+  outline: none;
+  min-height: 1em;
+}
+
+.task-description.empty {
+  font-style: italic;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.task-item:hover .task-description.empty,
+.task-description.empty:focus {
+  opacity: 1;
+}
+
+.task-description.empty::before {
+  content: attr(data-placeholder);
 }
 
 .step-list {

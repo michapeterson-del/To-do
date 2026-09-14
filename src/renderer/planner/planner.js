@@ -75,12 +75,7 @@ function renderTaskItem(task) {
   });
   body.appendChild(title);
 
-  if (task.description) {
-    const desc = document.createElement('div');
-    desc.className = 'task-description';
-    desc.textContent = task.description;
-    body.appendChild(desc);
-  }
+  body.appendChild(renderDescription(task));
 
   if (task.category === 'process') {
     body.appendChild(renderStepList(task));
@@ -106,6 +101,40 @@ function renderTaskItem(task) {
   li.appendChild(body);
   li.appendChild(deleteBtn);
   return li;
+}
+
+function renderDescription(task) {
+  const desc = document.createElement('div');
+  desc.className = 'task-description';
+  desc.contentEditable = 'true';
+  desc.spellcheck = false;
+  desc.textContent = task.description || '';
+  desc.dataset.placeholder = 'Notiz hinzufügen...';
+  desc.classList.toggle('empty', !task.description);
+
+  desc.addEventListener('focus', () => {
+    desc.classList.remove('empty');
+  });
+  desc.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      desc.blur();
+    } else if (e.key === 'Escape') {
+      desc.textContent = task.description || '';
+      desc.blur();
+    }
+  });
+  desc.addEventListener('blur', () => {
+    const text = desc.textContent.trim();
+    desc.classList.toggle('empty', !text);
+    if (text !== (task.description || '')) {
+      updateTask(task.id, { description: text });
+    } else {
+      desc.textContent = task.description || '';
+    }
+  });
+
+  return desc;
 }
 
 function renderStepList(task) {
