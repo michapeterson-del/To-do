@@ -34,7 +34,7 @@ function chunk(type, data) {
   return Buffer.concat([len, typeBuf, data, crcBuf]);
 }
 
-function writePng(filePath, width, height, pixelFn) {
+function encodePng(width, height, pixelFn) {
   const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
   const ihdrData = Buffer.alloc(13);
@@ -64,8 +64,43 @@ function writePng(filePath, width, height, pixelFn) {
   const idat = chunk('IDAT', zlib.deflateSync(raw, { level: 9 }));
   const iend = chunk('IEND', Buffer.alloc(0));
 
+  return Buffer.concat([sig, ihdr, idat, iend]);
+}
+
+function writePng(filePath, width, height, pixelFn) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, Buffer.concat([sig, ihdr, idat, iend]));
+  fs.writeFileSync(filePath, encodePng(width, height, pixelFn));
+}
+
+// Modernes ICO-Format: bettet PNG-Daten direkt pro Groesse ein (seit Windows
+// Vista unterstuetzt) - kein separates BMP-Encoding noetig.
+function writeIco(filePath, sizes, pixelFnFactory) {
+  const images = sizes.map((size) => encodePng(size, size, pixelFnFactory(size)));
+
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(0, 0); // reserved
+  header.writeUInt16LE(1, 2); // type: icon
+  header.writeUInt16LE(images.length, 4);
+
+  const entries = [];
+  let offset = 6 + images.length * 16;
+  images.forEach((img, i) => {
+    const size = sizes[i];
+    const entry = Buffer.alloc(16);
+    entry[0] = size >= 256 ? 0 : size; // width (0 = 256)
+    entry[1] = size >= 256 ? 0 : size; // height (0 = 256)
+    entry[2] = 0; // color count
+    entry[3] = 0; // reserved
+    entry.writeUInt16LE(1, 4); // color planes
+    entry.writeUInt16LE(32, 6); // bits per pixel
+    entry.writeUInt32LE(img.length, 8); // size of image data
+    entry.writeUInt32LE(offset, 12); // offset of image data
+    offset += img.length;
+    entries.push(entry);
+  });
+
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, Buffer.concat([header, ...entries, ...images]));
 }
 
 function distToSegment(px, py, ax, ay, bx, by) {
@@ -126,5 +161,6 @@ function drawIcon(size) {
 const buildDir = path.join(__dirname, '..', 'build');
 writePng(path.join(buildDir, 'icon.png'), 512, 512, drawIcon(512));
 writePng(path.join(buildDir, 'tray.png'), 64, 64, drawIcon(64));
+writeIco(path.join(buildDir, 'icon.ico'), [16, 32, 48, 256], (size) => drawIcon(size));
 
-console.log('Icons erzeugt: build/icon.png, build/tray.png');
+console.log('Icons erzeugt: build/icon.png, build/tray.png, build/icon.ico');
