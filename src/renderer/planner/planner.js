@@ -113,7 +113,7 @@ async function loadTasks() {
   hint.textContent = 'Lade Aufgaben...';
   try {
     tasks = await window.api.tasks.list();
-    hint.textContent = tasks.length ? '' : 'Noch keine Verbindung? Pruefe die Einstellungen (⚙).';
+    hint.textContent = '';
     renderAll();
   } catch (err) {
     hint.textContent = `Fehler beim Laden: ${err.message || err}`;
