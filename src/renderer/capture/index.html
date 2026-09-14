@@ -8,16 +8,17 @@
   <body>
     <div class="card">
       <div class="drag-bar">
-        <span>Aufgabe erfassen</span>
+        <span>📸 Aufgabe erfassen</span>
         <button id="closeBtn" class="icon-btn" title="Verwerfen (Esc)">✕</button>
       </div>
 
-      <div id="analyzingView" class="view">
+      <div id="analyzingView" class="view view-center" hidden>
         <div class="spinner"></div>
         <p>Screenshot wird analysiert...</p>
       </div>
 
-      <div id="errorView" class="view" hidden>
+      <div id="errorView" class="view view-center" hidden>
+        <p class="error-icon">⚠️</p>
         <p class="error-text" id="errorText"></p>
         <div class="row">
           <button id="retryBtn" class="btn btn-primary">Erneut versuchen</button>
@@ -27,18 +28,27 @@
 
       <form id="resultView" class="view" hidden>
         <label class="field-label" for="titleInput">Titel</label>
-        <input id="titleInput" type="text" maxlength="200" required />
+        <input id="titleInput" type="text" maxlength="200" required placeholder="Kurzer Titel der Aufgabe" />
 
         <label class="field-label" for="descriptionInput">Notiz</label>
-        <textarea id="descriptionInput" rows="3" maxlength="1000"></textarea>
+        <textarea id="descriptionInput" rows="2" maxlength="1000" placeholder="Kurzer Kontext (optional)"></textarea>
 
+        <label class="field-label">Kategorie</label>
         <div class="category-toggle" id="categoryToggle">
-          <button type="button" class="cat-btn" data-category="today">Heute</button>
-          <button type="button" class="cat-btn" data-category="process">Prozess/Optimierung</button>
+          <button type="button" class="cat-btn" data-category="today">☀️ Heute</button>
+          <button type="button" class="cat-btn" data-category="process">🔁 Prozess/Optimierung</button>
         </div>
 
-        <div class="row">
-          <button type="submit" class="btn btn-primary">Speichern</button>
+        <div id="processFields" class="process-fields" hidden>
+          <label class="field-label" for="lastStepsInput">Bisherige Schritte</label>
+          <textarea id="lastStepsInput" rows="2" maxlength="1000" placeholder="Was wurde bisher schon gemacht?"></textarea>
+
+          <label class="field-label" for="nextStepsInput">Nächste Schritte</label>
+          <textarea id="nextStepsInput" rows="2" maxlength="1000" placeholder="Was ist als nächstes geplant?"></textarea>
+        </div>
+
+        <div class="row row-actions">
+          <button type="submit" class="btn btn-primary">✓ Speichern</button>
           <button type="button" id="discardBtn" class="btn btn-ghost">Verwerfen</button>
         </div>
         <p class="hint-small">Speichern: Strg/Cmd+Enter &middot; Verwerfen: Esc</p>

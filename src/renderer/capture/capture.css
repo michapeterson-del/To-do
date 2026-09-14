@@ -1,21 +1,25 @@
 :root {
   color-scheme: light dark;
   --bg: #ffffff;
+  --surface: #f7f7fb;
   --text: #1c1d2b;
   --text-muted: #6b6e85;
   --border: #e3e4ee;
   --accent: #4f46e5;
   --accent-contrast: #ffffff;
+  --danger: #d64545;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #1e202c;
+    --surface: #262838;
     --text: #eceefb;
     --text-muted: #9799ad;
     --border: #2c2e3d;
     --accent: #7c73f0;
     --accent-contrast: #14152080;
+    --danger: #ef6a6a;
   }
 }
 
@@ -33,12 +37,12 @@ body {
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
 }
 
 .drag-bar {
@@ -46,8 +50,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px 8px 14px;
-  font-size: 12px;
+  padding: 10px 10px 10px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border);
 }
@@ -59,16 +64,24 @@ body {
   color: var(--text-muted);
   cursor: pointer;
   font-size: 13px;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 4px 9px;
+  border-radius: 7px;
 }
 
 .icon-btn:hover {
-  background: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* Nur eine View gleichzeitig zeigen - .view hat display:flex, das muss
+   die [hidden]-Regel hier explizit wieder ausschalten, sonst gewinnt die
+   Klassen-Regel gegen das UA-Default fuer [hidden]. */
+.view[hidden] {
+  display: none;
 }
 
 .view {
-  padding: 14px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -76,21 +89,22 @@ body {
   overflow-y: auto;
 }
 
-#analyzingView {
+.view-center {
   align-items: center;
   justify-content: center;
+  text-align: center;
   color: var(--text-muted);
   font-size: 13px;
+  gap: 12px;
 }
 
 .spinner {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: 3px solid var(--border);
   border-top-color: var(--accent);
   animation: spin 0.8s linear infinite;
-  margin-bottom: 8px;
 }
 
 @keyframes spin {
@@ -99,45 +113,63 @@ body {
   }
 }
 
+.error-icon {
+  font-size: 22px;
+  margin: 0;
+}
+
 .error-text {
-  color: #d64545;
+  color: var(--danger);
   font-size: 13px;
+  margin: 0;
 }
 
 .field-label {
   font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   color: var(--text-muted);
+  margin-top: 4px;
 }
 
 #titleInput,
-#descriptionInput {
+#descriptionInput,
+#lastStepsInput,
+#nextStepsInput {
   width: 100%;
-  padding: 7px 9px;
-  border-radius: 8px;
+  padding: 8px 10px;
+  border-radius: 9px;
   border: 1px solid var(--border);
-  background: transparent;
+  background: var(--surface);
   color: var(--text);
   font-size: 13px;
   font-family: inherit;
   resize: none;
 }
 
+#titleInput:focus,
+#descriptionInput:focus,
+#lastStepsInput:focus,
+#nextStepsInput:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .category-toggle {
   display: flex;
   gap: 6px;
-  margin-top: 2px;
 }
 
 .cat-btn {
   flex: 1;
-  padding: 6px 8px;
-  border-radius: 8px;
+  padding: 7px 8px;
+  border-radius: 9px;
   border: 1px solid var(--border);
-  background: transparent;
+  background: var(--surface);
   color: var(--text-muted);
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -148,21 +180,44 @@ body {
   font-weight: 600;
 }
 
+.process-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  margin-top: 2px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+}
+
+.process-fields[hidden] {
+  display: none;
+}
+
 .row {
   display: flex;
   gap: 8px;
-  margin-top: 4px;
+}
+
+.row-actions {
+  margin-top: 6px;
 }
 
 .btn {
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text);
-  border-radius: 8px;
-  padding: 7px 12px;
+  border-radius: 9px;
+  padding: 8px 12px;
   font-size: 12.5px;
+  font-weight: 500;
   cursor: pointer;
   flex: 1;
+}
+
+.btn:hover {
+  filter: brightness(1.05);
 }
 
 .btn-primary {
@@ -175,6 +230,6 @@ body {
 .hint-small {
   font-size: 10.5px;
   color: var(--text-muted);
-  margin: 2px 0 0;
+  margin: 0;
   text-align: center;
 }

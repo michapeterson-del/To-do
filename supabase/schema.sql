@@ -9,6 +9,8 @@ create table if not exists public.tasks (
   category text not null default 'today' check (category in ('today', 'process')),
   status text not null default 'open' check (status in ('open', 'done')),
   source text not null default 'manual' check (source in ('manual', 'screenshot')),
+  last_steps text not null default '',
+  next_steps text not null default '',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

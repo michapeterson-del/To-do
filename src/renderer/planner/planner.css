@@ -191,6 +191,34 @@ body {
   word-break: break-word;
 }
 
+.step-field {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.step-label {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.step-value {
+  outline: none;
+  word-break: break-word;
+  flex: 1;
+}
+
+.step-value.empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.step-value.empty::before {
+  content: attr(data-placeholder);
+}
+
 .task-meta {
   display: flex;
   gap: 6px;

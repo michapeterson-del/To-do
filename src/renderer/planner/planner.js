@@ -82,6 +82,11 @@ function renderTaskItem(task) {
     body.appendChild(desc);
   }
 
+  if (task.category === 'process') {
+    body.appendChild(renderStepField(task, 'last_steps', 'Bisher', 'Bisherige Schritte eintragen...'));
+    body.appendChild(renderStepField(task, 'next_steps', 'Nächste', 'Nächste Schritte eintragen...'));
+  }
+
   if (task.source === 'screenshot') {
     const meta = document.createElement('div');
     meta.className = 'task-meta';
@@ -102,6 +107,47 @@ function renderTaskItem(task) {
   li.appendChild(body);
   li.appendChild(deleteBtn);
   return li;
+}
+
+function renderStepField(task, field, label, placeholder) {
+  const wrap = document.createElement('div');
+  wrap.className = 'step-field';
+
+  const labelEl = document.createElement('span');
+  labelEl.className = 'step-label';
+  labelEl.textContent = `${label}:`;
+
+  const value = document.createElement('div');
+  value.className = 'step-value';
+  value.contentEditable = 'true';
+  value.spellcheck = false;
+  value.textContent = task[field] || '';
+  value.dataset.placeholder = placeholder;
+  value.classList.toggle('empty', !task[field]);
+
+  value.addEventListener('focus', () => {
+    value.classList.remove('empty');
+  });
+  value.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      value.blur();
+    } else if (e.key === 'Escape') {
+      value.textContent = task[field] || '';
+      value.blur();
+    }
+  });
+  value.addEventListener('blur', () => {
+    const text = value.textContent.trim();
+    value.classList.toggle('empty', !text);
+    if (text !== (task[field] || '')) {
+      updateTask(task.id, { [field]: text });
+    }
+  });
+
+  wrap.appendChild(labelEl);
+  wrap.appendChild(value);
+  return wrap;
 }
 
 function renderAll() {
@@ -128,6 +174,8 @@ async function addTask(category, title) {
     category,
     status: 'open',
     source: 'manual',
+    last_steps: '',
+    next_steps: '',
     created_at: new Date().toISOString(),
   };
   tasks.push(optimistic);
