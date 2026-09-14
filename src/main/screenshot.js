@@ -1,7 +1,12 @@
 const { desktopCapturer, screen } = require('electron');
 
+function getActiveDisplay() {
+  const cursorPoint = screen.getCursorScreenPoint();
+  return screen.getDisplayNearestPoint(cursorPoint);
+}
+
 async function captureScreenshotPngBase64() {
-  const display = screen.getPrimaryDisplay();
+  const display = getActiveDisplay();
   const scaleFactor = display.scaleFactor || 1;
   const width = Math.round(display.size.width * scaleFactor);
   const height = Math.round(display.size.height * scaleFactor);
@@ -15,8 +20,8 @@ async function captureScreenshotPngBase64() {
     throw new Error('Kein Bildschirm zum Aufnehmen gefunden (fehlt evtl. die Bildschirmaufnahme-Berechtigung?).');
   }
 
-  const primary = sources.find((s) => s.display_id === String(display.id)) || sources[0];
-  return primary.thumbnail.toPNG().toString('base64');
+  const active = sources.find((s) => s.display_id === String(display.id)) || sources[0];
+  return active.thumbnail.toPNG().toString('base64');
 }
 
-module.exports = { captureScreenshotPngBase64 };
+module.exports = { captureScreenshotPngBase64, getActiveDisplay };

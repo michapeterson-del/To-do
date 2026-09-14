@@ -66,7 +66,7 @@ function createCaptureWindow() {
     captureWindow.focus();
     return captureWindow;
   }
-  const display = screen.getPrimaryDisplay();
+  const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
   const width = 380;
   const height = 300;
   const x = display.workArea.x + display.workArea.width - width - 24;
