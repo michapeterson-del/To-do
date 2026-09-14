@@ -5,8 +5,7 @@ function getActiveDisplay() {
   return screen.getDisplayNearestPoint(cursorPoint);
 }
 
-async function captureScreenshotPngBase64() {
-  const display = getActiveDisplay();
+async function captureDisplayPngBase64(display) {
   const scaleFactor = display.scaleFactor || 1;
   const width = Math.round(display.size.width * scaleFactor);
   const height = Math.round(display.size.height * scaleFactor);
@@ -24,4 +23,4 @@ async function captureScreenshotPngBase64() {
   return active.thumbnail.toPNG().toString('base64');
 }
 
-module.exports = { captureScreenshotPngBase64, getActiveDisplay };
+module.exports = { getActiveDisplay, captureDisplayPngBase64 };

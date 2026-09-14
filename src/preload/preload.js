@@ -25,4 +25,9 @@ contextBridge.exposeInMainWorld('api', {
     onResult: (callback) => ipcRenderer.on('capture:result', (_event, draft) => callback(draft)),
     onError: (callback) => ipcRenderer.on('capture:error', (_event, message) => callback(message)),
   },
+  selection: {
+    onImage: (callback) => ipcRenderer.on('selection:image', (_event, pngBase64) => callback(pngBase64)),
+    submit: (croppedPngBase64) => ipcRenderer.invoke('selection:submit', croppedPngBase64),
+    cancel: () => ipcRenderer.invoke('selection:cancel'),
+  },
 });

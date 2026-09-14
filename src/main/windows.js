@@ -7,6 +7,7 @@ const APP_ICON_PATH = path.join(__dirname, '..', '..', 'build', 'icon.png');
 let plannerWindow = null;
 let captureWindow = null;
 let settingsWindow = null;
+let selectionWindow = null;
 
 function baseWebPreferences() {
   return {
@@ -112,6 +113,50 @@ function getPlannerWindow() {
   return plannerWindow;
 }
 
+// Vollflaechiges, randloses Fenster genau ueber dem aufgenommenen Bildschirm,
+// zeigt den Screenshot als Hintergrund und laesst den Nutzer per Maus einen
+// Ausschnitt ziehen (wie beim Snipping Tool).
+function createSelectionWindow(display, pngBase64) {
+  closeSelectionWindow();
+
+  selectionWindow = new BrowserWindow({
+    x: display.bounds.x,
+    y: display.bounds.y,
+    width: display.bounds.width,
+    height: display.bounds.height,
+    frame: false,
+    resizable: false,
+    movable: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    hasShadow: false,
+    show: false,
+    icon: APP_ICON_PATH,
+    webPreferences: baseWebPreferences(),
+  });
+  try {
+    selectionWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  } catch {
+    // Nur auf manchen Plattformen relevant (z.B. macOS Vollbild) - sonst egal.
+  }
+  selectionWindow.setAlwaysOnTop(true, 'screen-saver');
+  selectionWindow.loadFile(path.join(__dirname, '..', 'renderer', 'selection', 'index.html'));
+  selectionWindow.webContents.once('did-finish-load', () => {
+    selectionWindow.webContents.send('selection:image', pngBase64);
+  });
+  selectionWindow.once('ready-to-show', () => selectionWindow.show());
+  selectionWindow.on('closed', () => {
+    selectionWindow = null;
+  });
+  return selectionWindow;
+}
+
+function closeSelectionWindow() {
+  if (selectionWindow && !selectionWindow.isDestroyed()) {
+    selectionWindow.close();
+  }
+}
+
 module.exports = {
   createPlannerWindow,
   createSettingsWindow,
@@ -119,4 +164,6 @@ module.exports = {
   closeCaptureWindow,
   getCaptureWindow,
   getPlannerWindow,
+  createSelectionWindow,
+  closeSelectionWindow,
 };

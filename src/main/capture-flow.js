@@ -1,9 +1,12 @@
 const { Notification } = require('electron');
 const { readConfig, isConfigured } = require('./config-store');
-const { captureScreenshotPngBase64 } = require('./screenshot');
+const { getActiveDisplay, captureDisplayPngBase64 } = require('./screenshot');
 const { analyzeScreenshot } = require('./claude-vision');
-const { createCaptureWindow } = require('./windows');
+const { createCaptureWindow, createSelectionWindow } = require('./windows');
 
+// Schritt 1: Ganzen aktiven Bildschirm einmal aufnehmen und als Hintergrund
+// im Auswahl-Fenster zeigen (wie beim Snipping Tool) - erst nach der
+// Bereichsauswahl (siehe analyzeRegionAndShowResult) geht's an Claude.
 async function runCaptureFlow() {
   const config = readConfig();
   if (!isConfigured(config)) {
@@ -14,6 +17,22 @@ async function runCaptureFlow() {
     return;
   }
 
+  try {
+    const display = getActiveDisplay();
+    const pngBase64 = await captureDisplayPngBase64(display);
+    createSelectionWindow(display, pngBase64);
+  } catch (err) {
+    new Notification({
+      title: 'Aufgabenplaner',
+      body: err.message || String(err),
+    }).show();
+  }
+}
+
+// Schritt 2: Nachdem der Nutzer im Auswahl-Fenster einen Bereich gezogen hat,
+// wird nur dieser zugeschnittene Ausschnitt an Claude geschickt.
+async function analyzeRegionAndShowResult(croppedPngBase64) {
+  const config = readConfig();
   const win = createCaptureWindow();
   const send = (channel, payload) => {
     if (!win.isDestroyed()) win.webContents.send(channel, payload);
@@ -26,12 +45,11 @@ async function runCaptureFlow() {
   }
 
   try {
-    const pngBase64 = await captureScreenshotPngBase64();
-    const draft = await analyzeScreenshot(config, pngBase64);
+    const draft = await analyzeScreenshot(config, croppedPngBase64);
     send('capture:result', draft);
   } catch (err) {
     send('capture:error', err.message || String(err));
   }
 }
 
-module.exports = { runCaptureFlow };
+module.exports = { runCaptureFlow, analyzeRegionAndShowResult };
