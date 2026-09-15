@@ -134,7 +134,8 @@ body {
 }
 
 #titleInput,
-#descriptionInput {
+#descriptionInput,
+#updateNoteInput {
   width: 100%;
   padding: 8px 10px;
   border-radius: 9px;
@@ -147,9 +148,44 @@ body {
 }
 
 #titleInput:focus,
-#descriptionInput:focus {
+#descriptionInput:focus,
+#updateNoteInput:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+#duplicateNotice,
+#updateFields,
+#createFields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#duplicateNotice[hidden],
+#updateFields[hidden],
+#createFields[hidden] {
+  display: none;
+}
+
+.matched-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+.link-btn {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: flex-start;
+  padding: 0;
 }
 
 .category-toggle {
@@ -179,6 +215,10 @@ body {
 .row {
   display: flex;
   gap: 8px;
+}
+
+.row[hidden] {
+  display: none;
 }
 
 .row-actions {

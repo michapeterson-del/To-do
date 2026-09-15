@@ -2,22 +2,44 @@
 // eine Aufgabe extrahieren. Nutzt die HTTP-API direkt statt des SDKs, um
 // keine zusaetzliche Abhaengigkeit zu brauchen.
 
-const PROMPT = `Du siehst einen Screenshot vom Bildschirm eines Nutzers bei der Arbeit.
+function buildPrompt(existingTasks) {
+  const tasksForPrompt = existingTasks.map((t) => ({
+    id: t.id,
+    title: t.title,
+    description: t.description || '',
+    category: t.category,
+    steps: Array.isArray(t.steps) ? t.steps.map((s) => s.text) : [],
+  }));
 
-Erkenne daraus EINE konkrete, umsetzbare Aufgabe, die der Nutzer wahrscheinlich
-erledigen oder notieren moechte (z.B. eine E-Mail beantworten, ein Ticket
-bearbeiten, einen Fehler beheben, einen Prozess optimieren).
+  return `Du siehst einen Screenshot vom Bildschirm eines Nutzers bei der Arbeit.
 
-Entscheide, ob es sich eher um Folgendes handelt:
+Hier ist eine Liste seiner aktuell offenen Aufgaben (JSON):
+${JSON.stringify(tasksForPrompt)}
+
+Pruefe zuerst, ob der Screenshot zu einer dieser bestehenden Aufgaben gehoert
+(gleiches Thema/gleiche Sache, auch wenn der Wortlaut etwas anders ist):
+
+- Falls ja UND der Screenshot neue Information zeigt, die die Aufgabe
+  voranbringt (z.B. eine Antwort, ein neuer Status, ein naechster Schritt):
+  action = "update". "update_note" ist dieser neue Schritt, kurz und konkret
+  formuliert (wird als neuer Checklisten-Punkt an die Aufgabe angehaengt).
+- Falls ja, aber der Screenshot zeigt nichts Neues (einfach dieselbe Sache
+  nochmal): action = "duplicate".
+- Falls der Screenshot zu KEINER bestehenden Aufgabe passt: action = "create".
+  Erkenne dann daraus EINE konkrete, umsetzbare neue Aufgabe.
+
+Bei "create" oder wenn du unsicher bist, ob es eine bestehende Aufgabe ist,
+entscheide bei der Kategorie:
 - "today": eine konkrete Aufgabe fuer heute
 - "process": eine uebergeordnete Aufgabe / ein Prozess, der optimiert oder
   verbessert werden soll
 
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt in genau diesem Format, ohne
 weiteren Text, ohne Markdown-Codeblock:
-{"title": "kurzer Aufgabentitel", "description": "1-2 Saetze Kontext", "category": "today oder process"}`;
+{"action": "create, update oder duplicate", "matched_task_id": "id der passenden Aufgabe oder null", "title": "kurzer Aufgabentitel (bei create)", "description": "1-2 Saetze Kontext (bei create)", "category": "today oder process (bei create)", "update_note": "neuer Schritt (nur bei update)"}`;
+}
 
-function parseTaskJson(raw) {
+function parseTaskJson(raw, existingTasks) {
   const cleaned = raw
     .trim()
     .replace(/^```(?:json)?/i, '')
@@ -31,16 +53,48 @@ function parseTaskJson(raw) {
     throw new Error('Die KI-Antwort konnte nicht als Aufgabe interpretiert werden.');
   }
 
-  const title = String(parsed.title || '').slice(0, 200).trim();
-  if (!title) {
-    throw new Error('Auf dem Screenshot wurde keine erkennbare Aufgabe gefunden.');
+  const validIds = new Set(existingTasks.map((t) => t.id));
+  let action = ['create', 'update', 'duplicate'].includes(parsed.action) ? parsed.action : 'create';
+  let matchedTaskId = typeof parsed.matched_task_id === 'string' ? parsed.matched_task_id : null;
+
+  if ((action === 'update' || action === 'duplicate') && !validIds.has(matchedTaskId)) {
+    // Halluzinierte/unbekannte ID - sicherheitshalber als neue Aufgabe behandeln.
+    action = 'create';
+    matchedTaskId = null;
   }
-  const description = String(parsed.description || '').slice(0, 1000).trim();
-  const category = parsed.category === 'process' ? 'process' : 'today';
-  return { title, description, category };
+
+  if (action === 'create') {
+    const title = String(parsed.title || '').slice(0, 200).trim();
+    if (!title) {
+      throw new Error('Auf dem Screenshot wurde keine erkennbare Aufgabe gefunden.');
+    }
+    const description = String(parsed.description || '').slice(0, 1000).trim();
+    const category = parsed.category === 'process' ? 'process' : 'today';
+    return { action: 'create', title, description, category };
+  }
+
+  const matchedTask = existingTasks.find((t) => t.id === matchedTaskId);
+
+  if (action === 'duplicate') {
+    return { action: 'duplicate', matched_task_id: matchedTaskId, matched_task_title: matchedTask.title };
+  }
+
+  // action === 'update'
+  const updateNote = String(parsed.update_note || '').slice(0, 500).trim();
+  if (!updateNote) {
+    // Ohne konkreten neuen Schritt ist "update" bedeutungslos.
+    return { action: 'duplicate', matched_task_id: matchedTaskId, matched_task_title: matchedTask.title };
+  }
+  return {
+    action: 'update',
+    matched_task_id: matchedTaskId,
+    matched_task_title: matchedTask.title,
+    matched_task_steps: Array.isArray(matchedTask.steps) ? matchedTask.steps : [],
+    update_note: updateNote,
+  };
 }
 
-async function analyzeScreenshot(config, pngBase64) {
+async function analyzeScreenshot(config, pngBase64, existingTasks = []) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -50,13 +104,13 @@ async function analyzeScreenshot(config, pngBase64) {
     },
     body: JSON.stringify({
       model: config.claudeModel || 'claude-sonnet-5',
-      max_tokens: 500,
+      max_tokens: 600,
       messages: [
         {
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: 'image/png', data: pngBase64 } },
-            { type: 'text', text: PROMPT },
+            { type: 'text', text: buildPrompt(existingTasks) },
           ],
         },
       ],
@@ -73,7 +127,7 @@ async function analyzeScreenshot(config, pngBase64) {
   if (!textBlock) {
     throw new Error('Keine Textantwort von Claude erhalten.');
   }
-  return parseTaskJson(textBlock.text);
+  return parseTaskJson(textBlock.text, existingTasks);
 }
 
 module.exports = { analyzeScreenshot };

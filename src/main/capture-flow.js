@@ -2,6 +2,7 @@ const { Notification } = require('electron');
 const { readConfig, isConfigured } = require('./config-store');
 const { getActiveDisplay, captureDisplayPngBase64 } = require('./screenshot');
 const { analyzeScreenshot } = require('./claude-vision');
+const { listTasks } = require('./supabase-rest');
 const { createCaptureWindow, createSelectionWindow } = require('./windows');
 
 // Schritt 1: Ganzen aktiven Bildschirm einmal aufnehmen und als Hintergrund
@@ -45,7 +46,15 @@ async function analyzeRegionAndShowResult(croppedPngBase64) {
   }
 
   try {
-    const draft = await analyzeScreenshot(config, croppedPngBase64);
+    let existingTasks = [];
+    try {
+      const allTasks = await listTasks(config);
+      existingTasks = allTasks.filter((t) => t.status !== 'done');
+    } catch {
+      // Kein bestehender Abgleich moeglich (z.B. Netzwerkfehler) - trotzdem
+      // mit der Analyse fortfahren, einfach ohne Duplikat-Erkennung.
+    }
+    const draft = await analyzeScreenshot(config, croppedPngBase64, existingTasks);
     send('capture:result', draft);
   } catch (err) {
     send('capture:error', err.message || String(err));

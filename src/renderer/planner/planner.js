@@ -81,10 +81,7 @@ function renderTaskItem(task) {
   body.appendChild(title);
 
   body.appendChild(renderDescription(task));
-
-  if (task.category === 'process') {
-    body.appendChild(renderStepList(task));
-  }
+  body.appendChild(renderStepList(task));
 
   if (task.source === 'screenshot' || task.status === 'done') {
     const meta = document.createElement('div');

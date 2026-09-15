@@ -45,7 +45,14 @@ function registerIpcHandlers({ registerHotkey }) {
 
   ipcMain.handle('capture:submit', async (_event, draft) => {
     const config = readConfig();
-    const task = await createTask(config, { ...draft, source: 'screenshot' });
+    let task;
+    if (draft.action === 'update' && draft.matched_task_id) {
+      const existingSteps = Array.isArray(draft.matched_task_steps) ? draft.matched_task_steps : [];
+      const newStep = { id: `s${Date.now()}`, text: draft.update_note, done: false };
+      task = await updateTask(config, draft.matched_task_id, { steps: [...existingSteps, newStep] });
+    } else {
+      task = await createTask(config, { title: draft.title, description: draft.description, category: draft.category, source: 'screenshot' });
+    }
     closeCaptureWindow();
     const planner = getPlannerWindow();
     if (planner && !planner.isDestroyed()) {

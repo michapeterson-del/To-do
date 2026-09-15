@@ -27,22 +27,38 @@
       </div>
 
       <form id="resultView" class="view" hidden>
-        <label class="field-label" for="titleInput">Titel</label>
-        <input id="titleInput" type="text" maxlength="200" required placeholder="Kurzer Titel der Aufgabe" />
+        <div id="duplicateNotice" hidden>
+          <p class="field-label">Gibt es schon</p>
+          <p class="matched-title" id="matchedTitleDuplicate"></p>
+          <p class="hint-small">Der Screenshot zeigt nichts Neues zu dieser Aufgabe.</p>
+          <button type="button" id="saveAsNewBtn" class="link-btn">Trotzdem als neue Aufgabe speichern</button>
+        </div>
 
-        <label class="field-label" for="descriptionInput">Notiz</label>
-        <textarea id="descriptionInput" rows="2" maxlength="1000" placeholder="Kurzer Kontext (optional)"></textarea>
+        <div id="updateFields" hidden>
+          <p class="field-label">Aktualisiert bestehende Aufgabe</p>
+          <p class="matched-title" id="matchedTitleUpdate"></p>
+          <label class="field-label" for="updateNoteInput">Neuer Schritt</label>
+          <textarea id="updateNoteInput" rows="2" maxlength="500"></textarea>
+        </div>
 
-        <label class="field-label">Kategorie</label>
-        <div class="category-toggle" id="categoryToggle">
-          <button type="button" class="cat-btn" data-category="today">☀️ Heute</button>
-          <button type="button" class="cat-btn" data-category="process">🔁 Prozess/Optimierung</button>
+        <div id="createFields">
+          <label class="field-label" for="titleInput">Titel</label>
+          <input id="titleInput" type="text" maxlength="200" placeholder="Kurzer Titel der Aufgabe" />
+
+          <label class="field-label" for="descriptionInput">Notiz</label>
+          <textarea id="descriptionInput" rows="2" maxlength="1000" placeholder="Kurzer Kontext (optional)"></textarea>
+
+          <label class="field-label">Kategorie</label>
+          <div class="category-toggle" id="categoryToggle">
+            <button type="button" class="cat-btn" data-category="today">☀️ Heute</button>
+            <button type="button" class="cat-btn" data-category="process">🔁 Prozess/Optimierung</button>
+          </div>
         </div>
 
         <p class="error-text" id="saveErrorText" hidden></p>
 
-        <div class="row row-actions">
-          <button type="submit" class="btn btn-primary">✓ Speichern</button>
+        <div class="row row-actions" id="resultActions">
+          <button type="submit" class="btn btn-primary" id="submitBtn">✓ Speichern</button>
           <button type="button" id="discardBtn" class="btn btn-ghost">Verwerfen</button>
         </div>
         <p class="hint-small">Speichern: Strg/Cmd+Enter &middot; Verwerfen: Esc</p>
