@@ -195,6 +195,49 @@
         flex: 1;
       }
       .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 600; }
+
+      .capture-btn {
+        display: block;
+        width: 100%;
+        margin: 0 0 18px;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px dashed var(--accent);
+        background: transparent;
+        color: var(--accent);
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      dialog#captureDialog {
+        border: none;
+        border-radius: 16px;
+        padding: 0;
+        width: min(92vw, 420px);
+        color: var(--text);
+        background: var(--surface);
+      }
+      dialog#captureDialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+      .capture-body { padding: 18px; min-height: 120px; }
+      .capture-view { display: none; flex-direction: column; gap: 10px; }
+      .capture-view.active { display: flex; }
+      .capture-view-center { align-items: center; justify-content: center; text-align: center; color: var(--text-muted); font-size: 13px; padding: 20px 0; }
+      .spinner {
+        width: 26px; height: 26px; border-radius: 50%;
+        border: 3px solid var(--border); border-top-color: var(--accent);
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .capture-body .field-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 8px 0 3px; }
+      .capture-body input[type='text'], .capture-body textarea {
+        width: 100%; padding: 9px 10px; border-radius: 9px; border: 1px solid var(--border);
+        background: var(--bg); color: var(--text); font-size: 14px; font-family: inherit; resize: none;
+      }
+      .capture-category-toggle { display: flex; gap: 6px; margin-top: 4px; }
+      .capture-cat-btn { flex: 1; padding: 8px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); color: var(--text-muted); font-size: 12.5px; font-weight: 500; }
+      .capture-cat-btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 600; }
+      .matched-title { font-size: 14px; font-weight: 600; margin: 4px 0; padding: 8px 10px; border-radius: 9px; background: var(--bg); }
+      .link-btn { border: none; background: transparent; color: var(--accent); font-size: 12.5px; text-decoration: underline; padding: 4px 0; align-self: flex-start; }
     </style>
   </head>
   <body>
@@ -204,6 +247,9 @@
     </header>
 
     <main>
+      <button id="captureBtn" class="capture-btn">📸 Aufgabe aus Foto erfassen</button>
+      <input type="file" id="photoInput" accept="image/*" hidden />
+
       <section class="section">
         <div class="section-header">
           <h2>Heute</h2>
@@ -249,11 +295,72 @@
         <input id="urlInput" type="text" placeholder="https://xxxx.supabase.co" required />
         <label for="keyInput">Anon Public Key</label>
         <input id="keyInput" type="password" placeholder="eyJhbGciOi..." required />
+
+        <h2 style="margin-top: 16px">Claude (Foto-Analyse)</h2>
+        <p class="help">Optional - nur noetig, wenn du "Aufgabe aus Foto erfassen" nutzen willst.</p>
+        <label for="anthropicKeyInput">Anthropic API-Key</label>
+        <input id="anthropicKeyInput" type="password" placeholder="sk-ant-..." />
+        <label for="modelInput">Modell</label>
+        <input id="modelInput" type="text" placeholder="claude-sonnet-5" />
+
         <div class="settings-actions">
           <button type="submit" class="btn btn-primary">Speichern</button>
           <button type="button" id="settingsCancelBtn" class="btn">Abbrechen</button>
         </div>
       </form>
+    </dialog>
+
+    <dialog id="captureDialog">
+      <div class="capture-body">
+        <div id="captureAnalyzing" class="capture-view capture-view-center">
+          <div class="spinner"></div>
+          <p>Foto wird analysiert...</p>
+        </div>
+
+        <div id="captureError" class="capture-view capture-view-center">
+          <p style="font-size: 22px; margin: 0">⚠️</p>
+          <p id="captureErrorText" style="color: var(--danger); font-size: 13px; margin: 0"></p>
+          <button type="button" id="captureErrorCloseBtn" class="btn btn-primary" style="margin-top: 6px">Schliessen</button>
+        </div>
+
+        <div id="captureDuplicate" class="capture-view">
+          <p class="field-label">Gibt es schon</p>
+          <p class="matched-title" id="matchedTitleDuplicate"></p>
+          <p style="font-size: 12px; color: var(--text-muted); margin: 0">Das Foto zeigt nichts Neues zu dieser Aufgabe.</p>
+          <button type="button" id="saveAsNewBtn" class="link-btn">Trotzdem als neue Aufgabe speichern</button>
+          <div class="settings-actions">
+            <button type="button" id="captureDuplicateCloseBtn" class="btn">Schliessen</button>
+          </div>
+        </div>
+
+        <form id="captureResultForm" class="capture-view">
+          <div id="captureUpdateFields" style="display: none; flex-direction: column; gap: 8px">
+            <p class="field-label">Aktualisiert bestehende Aufgabe</p>
+            <p class="matched-title" id="matchedTitleUpdate"></p>
+            <label class="field-label" for="updateNoteInput">Neuer Schritt</label>
+            <textarea id="updateNoteInput" rows="2" maxlength="500"></textarea>
+          </div>
+
+          <div id="captureCreateFields" style="display: flex; flex-direction: column; gap: 8px">
+            <label class="field-label" for="captureTitleInput">Titel</label>
+            <input id="captureTitleInput" type="text" maxlength="200" placeholder="Kurzer Titel der Aufgabe" />
+            <label class="field-label" for="captureDescriptionInput">Notiz</label>
+            <textarea id="captureDescriptionInput" rows="2" maxlength="1000" placeholder="Kurzer Kontext (optional)"></textarea>
+            <label class="field-label">Kategorie</label>
+            <div class="capture-category-toggle" id="captureCategoryToggle">
+              <button type="button" class="capture-cat-btn" data-category="today">☀️ Heute</button>
+              <button type="button" class="capture-cat-btn" data-category="process">🔁 Prozess/Optimierung</button>
+            </div>
+          </div>
+
+          <p id="captureSaveError" style="color: var(--danger); font-size: 12.5px; margin: 4px 0 0; display: none"></p>
+
+          <div class="settings-actions">
+            <button type="submit" class="btn btn-primary" id="captureSubmitBtn">✓ Speichern</button>
+            <button type="button" id="captureDiscardBtn" class="btn">Verwerfen</button>
+          </div>
+        </form>
+      </div>
     </dialog>
 
     <script>
@@ -270,6 +377,8 @@
       const settingsForm = document.getElementById('settingsForm');
       const urlInput = document.getElementById('urlInput');
       const keyInput = document.getElementById('keyInput');
+      const anthropicKeyInput = document.getElementById('anthropicKeyInput');
+      const modelInput = document.getElementById('modelInput');
 
       let tasks = [];
       let config = null;
@@ -291,6 +400,8 @@
       function openSettings() {
         urlInput.value = config?.url || '';
         keyInput.value = config?.key || '';
+        anthropicKeyInput.value = config?.anthropicKey || '';
+        modelInput.value = config?.model || '';
         settingsDialog.showModal();
       }
 
@@ -302,7 +413,12 @@
         const url = urlInput.value.trim().replace(/\/$/, '');
         const key = keyInput.value.trim();
         if (!url || !key) return;
-        saveConfig({ url, key });
+        saveConfig({
+          url,
+          key,
+          anthropicKey: anthropicKeyInput.value.trim(),
+          model: modelInput.value.trim(),
+        });
         settingsDialog.close();
         loadTasks();
       });
@@ -588,6 +704,280 @@
       });
 
       window.addEventListener('focus', () => loadTasks());
+
+      // --- Foto erfassen: Bild auswaehlen -> verkleinern -> an Claude
+      // schicken (inkl. offener Aufgaben zum Duplikat-Abgleich) -> Ergebnis
+      // bestaetigen. Spiegelt den Screenshot-Flow der Desktop-App.
+
+      const captureDialog = document.getElementById('captureDialog');
+      const captureAnalyzing = document.getElementById('captureAnalyzing');
+      const captureError = document.getElementById('captureError');
+      const captureErrorText = document.getElementById('captureErrorText');
+      const captureDuplicate = document.getElementById('captureDuplicate');
+      const captureResultForm = document.getElementById('captureResultForm');
+      const captureUpdateFields = document.getElementById('captureUpdateFields');
+      const captureCreateFields = document.getElementById('captureCreateFields');
+      const matchedTitleDuplicate = document.getElementById('matchedTitleDuplicate');
+      const matchedTitleUpdate = document.getElementById('matchedTitleUpdate');
+      const updateNoteInput = document.getElementById('updateNoteInput');
+      const captureTitleInput = document.getElementById('captureTitleInput');
+      const captureDescriptionInput = document.getElementById('captureDescriptionInput');
+      const captureCategoryToggle = document.getElementById('captureCategoryToggle');
+      const captureSaveError = document.getElementById('captureSaveError');
+      const captureSubmitBtn = document.getElementById('captureSubmitBtn');
+
+      let captureCategory = 'today';
+      let captureMode = 'create';
+      let captureLastDraft = null;
+
+      function showCaptureView(view) {
+        [captureAnalyzing, captureError, captureDuplicate, captureResultForm].forEach((el) => el.classList.remove('active'));
+        view.classList.add('active');
+      }
+
+      function setCaptureCategory(category) {
+        captureCategory = category === 'process' ? 'process' : 'today';
+        captureCategoryToggle.querySelectorAll('.capture-cat-btn').forEach((btn) => {
+          btn.classList.toggle('active', btn.dataset.category === captureCategory);
+        });
+      }
+
+      function setCaptureMode(mode) {
+        captureMode = mode;
+        captureUpdateFields.style.display = mode === 'update' ? 'flex' : 'none';
+        captureCreateFields.style.display = mode === 'create' ? 'flex' : 'none';
+      }
+
+      captureCategoryToggle.querySelectorAll('.capture-cat-btn').forEach((btn) => {
+        btn.addEventListener('click', () => setCaptureCategory(btn.dataset.category));
+      });
+
+      document.getElementById('captureBtn').addEventListener('click', () => {
+        if (!config?.anthropicKey) {
+          openSettings();
+          return;
+        }
+        document.getElementById('photoInput').click();
+      });
+
+      function resizeImageToBase64(file, maxSize) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            let { width, height } = img;
+            if (width > maxSize || height > maxSize) {
+              const scale = maxSize / Math.max(width, height);
+              width = Math.round(width * scale);
+              height = Math.round(height * scale);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
+          };
+          img.onerror = () => reject(new Error('Bild konnte nicht gelesen werden.'));
+          img.src = URL.createObjectURL(file);
+        });
+      }
+
+      function buildVisionPrompt(existingTasks) {
+        const tasksForPrompt = existingTasks.map((t) => ({
+          id: t.id,
+          title: t.title,
+          description: t.description || '',
+          category: t.category,
+          steps: Array.isArray(t.steps) ? t.steps.map((s) => s.text) : [],
+        }));
+        return `Du siehst ein Foto vom Bildschirm eines Nutzers bei der Arbeit.
+
+Hier ist eine Liste seiner aktuell offenen Aufgaben (JSON):
+${JSON.stringify(tasksForPrompt)}
+
+Pruefe zuerst, ob das Foto zu einer dieser bestehenden Aufgaben gehoert
+(gleiches Thema/gleiche Sache, auch wenn der Wortlaut etwas anders ist):
+
+- Falls ja UND das Foto neue Information zeigt, die die Aufgabe voranbringt
+  (z.B. eine Antwort, ein neuer Status, ein naechster Schritt): action =
+  "update". "update_note" ist dieser neue Schritt, kurz und konkret
+  formuliert (wird als neuer Checklisten-Punkt an die Aufgabe angehaengt).
+- Falls ja, aber das Foto zeigt nichts Neues: action = "duplicate".
+- Falls das Foto zu KEINER bestehenden Aufgabe passt: action = "create".
+  Erkenne dann daraus EINE konkrete, umsetzbare neue Aufgabe.
+
+Bei "create" entscheide bei der Kategorie:
+- "today": eine konkrete Aufgabe fuer heute
+- "process": eine uebergeordnete Aufgabe / ein Prozess, der optimiert oder
+  verbessert werden soll
+
+Antworte AUSSCHLIESSLICH mit einem JSON-Objekt in genau diesem Format, ohne
+weiteren Text, ohne Markdown-Codeblock:
+{"action": "create, update oder duplicate", "matched_task_id": "id der passenden Aufgabe oder null", "title": "kurzer Aufgabentitel (bei create)", "description": "1-2 Saetze Kontext (bei create)", "category": "today oder process (bei create)", "update_note": "neuer Schritt (nur bei update)"}`;
+      }
+
+      function parseVisionJson(raw, existingTasks) {
+        const cleaned = raw.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+        let parsed;
+        try {
+          parsed = JSON.parse(cleaned);
+        } catch {
+          throw new Error('Die KI-Antwort konnte nicht als Aufgabe interpretiert werden.');
+        }
+
+        const validIds = new Set(existingTasks.map((t) => t.id));
+        let action = ['create', 'update', 'duplicate'].includes(parsed.action) ? parsed.action : 'create';
+        let matchedTaskId = typeof parsed.matched_task_id === 'string' ? parsed.matched_task_id : null;
+
+        if ((action === 'update' || action === 'duplicate') && !validIds.has(matchedTaskId)) {
+          action = 'create';
+          matchedTaskId = null;
+        }
+
+        if (action === 'create') {
+          const title = String(parsed.title || '').slice(0, 200).trim();
+          if (!title) throw new Error('Auf dem Foto wurde keine erkennbare Aufgabe gefunden.');
+          const description = String(parsed.description || '').slice(0, 1000).trim();
+          const category = parsed.category === 'process' ? 'process' : 'today';
+          return { action: 'create', title, description, category };
+        }
+
+        const matchedTask = existingTasks.find((t) => t.id === matchedTaskId);
+
+        if (action === 'duplicate') {
+          return { action: 'duplicate', matched_task_id: matchedTaskId, matched_task_title: matchedTask.title };
+        }
+
+        const updateNote = String(parsed.update_note || '').slice(0, 500).trim();
+        if (!updateNote) {
+          return { action: 'duplicate', matched_task_id: matchedTaskId, matched_task_title: matchedTask.title };
+        }
+        return {
+          action: 'update',
+          matched_task_id: matchedTaskId,
+          matched_task_title: matchedTask.title,
+          matched_task_steps: Array.isArray(matchedTask.steps) ? matchedTask.steps : [],
+          update_note: updateNote,
+        };
+      }
+
+      async function analyzePhoto(base64Jpeg, existingTasks) {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'x-api-key': config.anthropicKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: config.model || 'claude-sonnet-5',
+            max_tokens: 600,
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64Jpeg } },
+                  { type: 'text', text: buildVisionPrompt(existingTasks) },
+                ],
+              },
+            ],
+          }),
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          throw new Error(`Claude API Fehler (${res.status}): ${text || res.statusText}`);
+        }
+        const data = await res.json();
+        const textBlock = Array.isArray(data.content) ? data.content.find((c) => c.type === 'text') : null;
+        if (!textBlock) throw new Error('Keine Textantwort von Claude erhalten.');
+        return parseVisionJson(textBlock.text, existingTasks);
+      }
+
+      document.getElementById('photoInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        e.target.value = '';
+        if (!file) return;
+
+        captureDialog.showModal();
+        showCaptureView(captureAnalyzing);
+
+        try {
+          const base64Jpeg = await resizeImageToBase64(file, 1600);
+          const existingTasks = tasks.filter((t) => t.status !== 'done');
+          const draft = await analyzePhoto(base64Jpeg, existingTasks);
+          captureLastDraft = draft;
+
+          if (draft.action === 'duplicate') {
+            matchedTitleDuplicate.textContent = draft.matched_task_title || '';
+            showCaptureView(captureDuplicate);
+          } else if (draft.action === 'update') {
+            setCaptureMode('update');
+            matchedTitleUpdate.textContent = draft.matched_task_title || '';
+            updateNoteInput.value = draft.update_note || '';
+            showCaptureView(captureResultForm);
+          } else {
+            setCaptureMode('create');
+            captureTitleInput.value = draft.title || '';
+            captureDescriptionInput.value = draft.description || '';
+            setCaptureCategory(draft.category);
+            showCaptureView(captureResultForm);
+          }
+        } catch (err) {
+          captureErrorText.textContent = err.message || String(err);
+          showCaptureView(captureError);
+        }
+      });
+
+      document.getElementById('saveAsNewBtn').addEventListener('click', () => {
+        setCaptureMode('create');
+        captureTitleInput.value = captureLastDraft?.matched_task_title || '';
+        captureDescriptionInput.value = '';
+        setCaptureCategory('today');
+        showCaptureView(captureResultForm);
+      });
+
+      captureResultForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        captureSaveError.style.display = 'none';
+        captureSubmitBtn.disabled = true;
+        try {
+          if (captureMode === 'update') {
+            const updateNote = updateNoteInput.value.trim();
+            if (!updateNote) return;
+            const existingSteps = Array.isArray(captureLastDraft.matched_task_steps) ? captureLastDraft.matched_task_steps : [];
+            const newStep = { id: `s${Date.now()}`, text: updateNote, done: false };
+            await apiRequest(
+              'PATCH',
+              `tasks?id=eq.${encodeURIComponent(captureLastDraft.matched_task_id)}`,
+              { steps: [...existingSteps, newStep] },
+              'return=representation'
+            );
+          } else {
+            const title = captureTitleInput.value.trim();
+            if (!title) return;
+            const payload = {
+              title,
+              description: captureDescriptionInput.value.trim(),
+              category: captureCategory,
+              status: 'open',
+              source: 'screenshot',
+              steps: [],
+            };
+            await apiRequest('POST', 'tasks', payload, 'return=representation');
+          }
+          captureDialog.close();
+          loadTasks();
+        } catch (err) {
+          captureSaveError.textContent = `Speichern fehlgeschlagen: ${err.message || err}`;
+          captureSaveError.style.display = 'block';
+        } finally {
+          captureSubmitBtn.disabled = false;
+        }
+      });
+
+      document.getElementById('captureDiscardBtn').addEventListener('click', () => captureDialog.close());
+      document.getElementById('captureErrorCloseBtn').addEventListener('click', () => captureDialog.close());
+      document.getElementById('captureDuplicateCloseBtn').addEventListener('click', () => captureDialog.close());
 
       config = loadConfig();
       if (!config) {
