@@ -113,6 +113,7 @@
       .task-title { font-size: 15px; outline: none; word-break: break-word; }
       .task-item.done .task-title { text-decoration: line-through; color: var(--done); }
       .task-description {
+        white-space: pre-wrap;
         font-size: 13px;
         color: var(--text-muted);
         margin-top: 3px;
@@ -485,7 +486,7 @@
         desc.classList.toggle('empty', !task.description);
         desc.addEventListener('focus', () => desc.classList.remove('empty'));
         desc.addEventListener('blur', () => {
-          const text = desc.textContent.trim();
+          const text = desc.innerText.trim();
           desc.classList.toggle('empty', !text);
           if (text !== (task.description || '')) updateTask(task.id, { description: text });
           else desc.textContent = task.description || '';

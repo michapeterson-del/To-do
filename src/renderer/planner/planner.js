@@ -126,16 +126,13 @@ function renderDescription(task) {
     desc.classList.remove('empty');
   });
   desc.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      desc.blur();
-    } else if (e.key === 'Escape') {
+    if (e.key === 'Escape') {
       desc.textContent = task.description || '';
       desc.blur();
     }
   });
   desc.addEventListener('blur', () => {
-    const text = desc.textContent.trim();
+    const text = desc.innerText.trim();
     desc.classList.toggle('empty', !text);
     if (text !== (task.description || '')) {
       updateTask(task.id, { description: text });

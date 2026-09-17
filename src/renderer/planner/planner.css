@@ -191,6 +191,7 @@ body {
   word-break: break-word;
   outline: none;
   min-height: 1em;
+  white-space: pre-wrap;
 }
 
 .task-description.empty {
