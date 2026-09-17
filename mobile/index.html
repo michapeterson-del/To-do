@@ -197,6 +197,21 @@
       }
       .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 600; }
 
+      .search-input {
+        display: block;
+        width: 100%;
+        margin: 0 0 12px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        font-size: 14px;
+      }
+      .search-input:focus {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
       .capture-btn {
         display: block;
         width: 100%;
@@ -248,6 +263,7 @@
     </header>
 
     <main>
+      <input type="search" id="searchInput" class="search-input" placeholder="🔍 Suchen..." />
       <button id="captureBtn" class="capture-btn">📸 Aufgabe aus Foto erfassen</button>
       <input type="file" id="photoInput" accept="image/*" hidden />
 
@@ -374,6 +390,7 @@
       const countProcess = document.getElementById('countProcess');
       const countDone = document.getElementById('countDone');
       const hint = document.getElementById('hint');
+      const searchInput = document.getElementById('searchInput');
       const settingsDialog = document.getElementById('settingsDialog');
       const settingsForm = document.getElementById('settingsForm');
       const urlInput = document.getElementById('urlInput');
@@ -382,6 +399,12 @@
       const modelInput = document.getElementById('modelInput');
 
       let tasks = [];
+      let searchQuery = '';
+
+      searchInput.addEventListener('input', () => {
+        searchQuery = searchInput.value.trim().toLowerCase();
+        renderAll();
+      });
       let config = null;
 
       function loadConfig() {
@@ -583,7 +606,11 @@
         checkbox.type = 'checkbox';
         checkbox.checked = task.status === 'done';
         checkbox.addEventListener('change', () => {
-          updateTask(task.id, { status: checkbox.checked ? 'done' : 'open' });
+          const patch = { status: checkbox.checked ? 'done' : 'open' };
+          if (checkbox.checked && Array.isArray(task.steps) && task.steps.some((s) => !s.done)) {
+            patch.steps = task.steps.map((s) => ({ ...s, done: true }));
+          }
+          updateTask(task.id, patch);
         });
 
         const body = document.createElement('div');
@@ -627,10 +654,16 @@
         return li;
       }
 
+      function matchesSearch(task) {
+        if (!searchQuery) return true;
+        const haystack = `${task.title} ${task.description || ''}`.toLowerCase();
+        return haystack.includes(searchQuery);
+      }
+
       function renderAll() {
-        renderColumn(listToday, countToday, (t) => t.category === 'today' && t.status !== 'done', byCreatedAtAsc);
-        renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done', byCreatedAtAsc);
-        renderColumn(listDone, countDone, (t) => t.status === 'done', byUpdatedAtDesc);
+        renderColumn(listToday, countToday, (t) => t.category === 'today' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
+        renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
+        renderColumn(listDone, countDone, (t) => t.status === 'done' && matchesSearch(t), byUpdatedAtDesc);
       }
 
       async function loadTasks() {

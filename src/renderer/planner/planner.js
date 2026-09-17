@@ -5,8 +5,10 @@ const countToday = document.getElementById('countToday');
 const countProcess = document.getElementById('countProcess');
 const countDone = document.getElementById('countDone');
 const hint = document.getElementById('hint');
+const searchInput = document.getElementById('searchInput');
 
 let tasks = [];
+let searchQuery = '';
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -50,7 +52,11 @@ function renderTaskItem(task) {
   checkbox.type = 'checkbox';
   checkbox.checked = task.status === 'done';
   checkbox.addEventListener('change', () => {
-    updateTask(task.id, { status: checkbox.checked ? 'done' : 'open' });
+    const patch = { status: checkbox.checked ? 'done' : 'open' };
+    if (checkbox.checked && Array.isArray(task.steps) && task.steps.some((s) => !s.done)) {
+      patch.steps = task.steps.map((s) => ({ ...s, done: true }));
+    }
+    updateTask(task.id, patch);
   });
 
   const body = document.createElement('div');
@@ -234,11 +240,22 @@ function renderStepList(task) {
   return wrap;
 }
 
-function renderAll() {
-  renderColumn(listToday, countToday, (t) => t.category === 'today' && t.status !== 'done', byCreatedAtAsc);
-  renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done', byCreatedAtAsc);
-  renderColumn(listDone, countDone, (t) => t.status === 'done', byUpdatedAtDesc);
+function matchesSearch(task) {
+  if (!searchQuery) return true;
+  const haystack = `${task.title} ${task.description || ''}`.toLowerCase();
+  return haystack.includes(searchQuery);
 }
+
+function renderAll() {
+  renderColumn(listToday, countToday, (t) => t.category === 'today' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
+  renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
+  renderColumn(listDone, countDone, (t) => t.status === 'done' && matchesSearch(t), byUpdatedAtDesc);
+}
+
+searchInput.addEventListener('input', () => {
+  searchQuery = searchInput.value.trim().toLowerCase();
+  renderAll();
+});
 
 async function loadTasks() {
   hint.textContent = 'Lade Aufgaben...';
