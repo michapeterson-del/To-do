@@ -126,7 +126,10 @@ function renderDescription(task) {
     desc.classList.remove('empty');
   });
   desc.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      desc.blur();
+    } else if (e.key === 'Escape') {
       desc.textContent = task.description || '';
       desc.blur();
     }

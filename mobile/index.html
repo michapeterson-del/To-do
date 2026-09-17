@@ -485,6 +485,12 @@
         desc.dataset.placeholder = 'Notiz hinzufuegen...';
         desc.classList.toggle('empty', !task.description);
         desc.addEventListener('focus', () => desc.classList.remove('empty'));
+        desc.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            desc.blur();
+          }
+        });
         desc.addEventListener('blur', () => {
           const text = desc.innerText.trim();
           desc.classList.toggle('empty', !text);
