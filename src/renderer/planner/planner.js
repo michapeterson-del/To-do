@@ -333,6 +333,23 @@ document.querySelectorAll('.add-form').forEach((form) => {
 document.getElementById('captureBtn').addEventListener('click', () => {
   window.api.capture.triggerNow();
 });
+
+const doneDrawer = document.getElementById('doneDrawer');
+const doneBackdrop = document.getElementById('doneBackdrop');
+
+function openDoneDrawer() {
+  doneDrawer.classList.add('open');
+  doneBackdrop.classList.add('open');
+}
+
+function closeDoneDrawer() {
+  doneDrawer.classList.remove('open');
+  doneBackdrop.classList.remove('open');
+}
+
+document.getElementById('doneToggleBtn').addEventListener('click', openDoneDrawer);
+document.getElementById('doneCloseBtn').addEventListener('click', closeDoneDrawer);
+doneBackdrop.addEventListener('click', closeDoneDrawer);
 document.getElementById('refreshBtn').addEventListener('click', () => loadTasks());
 document.getElementById('settingsBtn').addEventListener('click', () => {
   window.api.openSettingsWindow();

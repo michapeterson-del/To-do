@@ -13,6 +13,9 @@
         <button id="captureBtn" class="btn btn-primary" title="Screenshot analysieren und Aufgabe erfassen">
           📸 Aufgabe jetzt erfassen
         </button>
+        <button id="doneToggleBtn" class="btn btn-ghost" title="Erledigte Aufgaben anzeigen">
+          ✅ Erledigt <span class="count" id="countDone">0</span>
+        </button>
         <button id="refreshBtn" class="btn btn-ghost" title="Aktualisieren">⟳</button>
         <button id="settingsBtn" class="btn btn-ghost" title="Einstellungen">⚙</button>
       </div>
@@ -40,17 +43,18 @@
         </form>
         <ul class="task-list" id="listProcess"></ul>
       </section>
-
-      <section class="column" data-category="done">
-        <div class="column-header">
-          <h2>Erledigt</h2>
-          <span class="count" id="countDone">0</span>
-        </div>
-        <ul class="task-list" id="listDone"></ul>
-      </section>
     </main>
 
     <p class="hint" id="hint"></p>
+
+    <div id="doneBackdrop" class="done-backdrop"></div>
+    <aside id="doneDrawer" class="done-drawer">
+      <div class="column-header">
+        <h2>Erledigt</h2>
+        <button id="doneCloseBtn" class="btn btn-ghost" title="Schliessen">✕</button>
+      </div>
+      <ul class="task-list" id="listDone"></ul>
+    </aside>
 
     <script src="planner.js"></script>
   </body>

@@ -60,10 +60,14 @@
         border: 1px solid var(--border);
         color: var(--text);
         border-radius: 10px;
-        width: 36px;
+        min-width: 36px;
         height: 36px;
+        padding: 0 8px;
         font-size: 15px;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
       }
       main { padding: 12px 16px 32px; }
       .section { margin-bottom: 22px; }
@@ -197,6 +201,34 @@
       }
       .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 600; }
 
+      .done-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 40;
+      }
+      .done-backdrop.open {
+        display: block;
+      }
+      .done-drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100vh;
+        width: min(360px, 88vw);
+        background: var(--surface);
+        border-left: 1px solid var(--border);
+        box-shadow: -8px 0 24px rgba(0, 0, 0, 0.2);
+        padding: 16px;
+        overflow-y: auto;
+        transform: translateX(100%);
+        transition: transform 0.2s ease;
+        z-index: 50;
+      }
+      .done-drawer.open {
+        transform: translateX(0);
+      }
       .search-input {
         display: block;
         width: 100%;
@@ -259,6 +291,7 @@
   <body>
     <header>
       <h1>Aufgabenplaner</h1>
+      <button id="doneToggleBtn" class="icon-btn" title="Erledigte Aufgaben anzeigen">✅ <span class="count" id="countDone">0</span></button>
       <button id="settingsBtn" class="icon-btn" title="Einstellungen">⚙</button>
     </header>
 
@@ -289,16 +322,17 @@
         <ul class="task-list" id="listProcess"></ul>
       </section>
 
-      <section class="section">
-        <div class="section-header">
-          <h2>Erledigt</h2>
-          <span class="count" id="countDone">0</span>
-        </div>
-        <ul class="task-list" id="listDone"></ul>
-      </section>
-
       <p class="hint" id="hint"></p>
     </main>
+
+    <div id="doneBackdrop" class="done-backdrop"></div>
+    <aside id="doneDrawer" class="done-drawer">
+      <div class="section-header">
+        <h2>Erledigt</h2>
+        <button id="doneCloseBtn" class="icon-btn" title="Schliessen">✕</button>
+      </div>
+      <ul class="task-list" id="listDone"></ul>
+    </aside>
 
     <dialog id="settingsDialog">
       <form class="settings-body" id="settingsForm">
@@ -431,6 +465,19 @@
 
       document.getElementById('settingsBtn').addEventListener('click', openSettings);
       document.getElementById('settingsCancelBtn').addEventListener('click', () => settingsDialog.close());
+
+      const doneDrawer = document.getElementById('doneDrawer');
+      const doneBackdrop = document.getElementById('doneBackdrop');
+      function closeDoneDrawer() {
+        doneDrawer.classList.remove('open');
+        doneBackdrop.classList.remove('open');
+      }
+      document.getElementById('doneToggleBtn').addEventListener('click', () => {
+        doneDrawer.classList.add('open');
+        doneBackdrop.classList.add('open');
+      });
+      document.getElementById('doneCloseBtn').addEventListener('click', closeDoneDrawer);
+      doneBackdrop.addEventListener('click', closeDoneDrawer);
 
       settingsForm.addEventListener('submit', (e) => {
         e.preventDefault();
