@@ -30,9 +30,10 @@ Pruefe zuerst, ob der Screenshot zu einer dieser bestehenden Aufgaben gehoert
 
 Bei "create" oder wenn du unsicher bist, ob es eine bestehende Aufgabe ist,
 entscheide bei der Kategorie:
-- "today": eine konkrete Aufgabe fuer heute
+- "today": eine konkrete Arbeits-Aufgabe fuer heute
 - "process": eine uebergeordnete Aufgabe / ein Prozess, der optimiert oder
   verbessert werden soll
+- "private": eine persoenliche/private Angelegenheit ohne Arbeitsbezug
 
 Bei "create" ist "description" PFLICHT und darf NIE leer bleiben, auch wenn
 der Titel schon viel sagt: fasse dort konkret zusammen, was auf dem
@@ -43,7 +44,7 @@ mindestens einen vollstaendigen Satz.
 
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt in genau diesem Format, ohne
 weiteren Text, ohne Markdown-Codeblock:
-{"action": "create, update oder duplicate", "matched_task_id": "id der passenden Aufgabe oder null", "title": "kurzer Aufgabentitel (bei create)", "description": "1-2 Saetze Kontext (bei create)", "category": "today oder process (bei create)", "update_note": "neuer Schritt (nur bei update)"}`;
+{"action": "create, update oder duplicate", "matched_task_id": "id der passenden Aufgabe oder null", "title": "kurzer Aufgabentitel (bei create)", "description": "1-2 Saetze Kontext (bei create)", "category": "today, process oder private (bei create)", "update_note": "neuer Schritt (nur bei update)"}`;
 }
 
 function parseTaskJson(raw, existingTasks) {
@@ -76,7 +77,7 @@ function parseTaskJson(raw, existingTasks) {
       throw new Error('Auf dem Screenshot wurde keine erkennbare Aufgabe gefunden.');
     }
     const description = String(parsed.description || '').slice(0, 1000).trim() || title;
-    const category = parsed.category === 'process' ? 'process' : 'today';
+    const category = ['process', 'private'].includes(parsed.category) ? parsed.category : 'today';
     return { action: 'create', title, description, category };
   }
 

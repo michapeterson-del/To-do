@@ -1,5 +1,8 @@
 // Aufgabenplaner Home-Bildschirm-Widget (Scriptable)
 //
+// Ein Script fuer alle 3 Kategorien - welche Kategorie ein Widget zeigt,
+// wird ueber den Widget-Parameter eingestellt (nicht im Script selbst).
+//
 // Einrichtung:
 // 1. "Scriptable" App aus dem App Store laden (kostenlos).
 // 2. Neues Script anlegen, diesen ganzen Text reinkopieren.
@@ -10,13 +13,27 @@
 // 5. Auf dem Home-Bildschirm: gedrueckt halten -> "+" -> "Scriptable"
 //    suchen -> Widget-Groesse waehlen -> hinzufuegen -> bei "Script"
 //    dieses Script auswaehlen.
+// 6. Auf das neu hinzugefuegte Widget tippen und halten -> "Widget
+//    bearbeiten" -> Feld "Parameter" ausfuellen mit: today, process
+//    oder private
+// 7. Schritt 5+6 zweimal wiederholen fuer die anderen beiden
+//    Kategorien - macht 3 Widgets mit demselben Script.
 
 const SUPABASE_URL = "https://DEINE-PROJEKT-ID.supabase.co";
 const SUPABASE_ANON_KEY = "DEIN-ANON-KEY";
 const APP_URL = "https://michapeterson-del.github.io/To-do/mobile/";
 
+const CATEGORY_INFO = {
+  today: { label: "☀️ Heute", icon: "☀️" },
+  process: { label: "🔁 Prozesse", icon: "🔁" },
+  private: { label: "🔒 Privat", icon: "🔒" },
+};
+
+const category = CATEGORY_INFO[args.widgetParameter] ? args.widgetParameter : "today";
+const info = CATEGORY_INFO[category];
+
 async function fetchTasks() {
-  const url = `${SUPABASE_URL}/rest/v1/tasks?select=title,category,status,created_at&status=eq.open&category=eq.today&order=created_at.asc`;
+  const url = `${SUPABASE_URL}/rest/v1/tasks?select=title,status,created_at&status=eq.open&category=eq.${category}&order=created_at.asc`;
   const req = new Request(url);
   req.headers = {
     apikey: SUPABASE_ANON_KEY,
@@ -30,7 +47,7 @@ function createWidget(tasks, errorMessage) {
   w.backgroundColor = new Color("#1c1d2b");
   w.url = APP_URL;
 
-  const header = w.addText("📋 Aufgaben");
+  const header = w.addText(info.label);
   header.font = Font.boldSystemFont(14);
   header.textColor = Color.white();
   w.addSpacer(6);
@@ -53,8 +70,7 @@ function createWidget(tasks, errorMessage) {
   const maxItems = family === "large" ? 8 : family === "medium" ? 4 : 3;
 
   for (const task of tasks.slice(0, maxItems)) {
-    const icon = task.category === "process" ? "🔁" : "☀️";
-    const line = w.addText(`${icon} ${task.title}`);
+    const line = w.addText(`${info.icon} ${task.title}`);
     line.font = Font.systemFont(12);
     line.textColor = Color.white();
     line.lineLimit = 1;
