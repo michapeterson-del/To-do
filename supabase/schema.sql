@@ -6,7 +6,7 @@ create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   description text not null default '',
-  category text not null default 'today' check (category in ('today', 'process')),
+  category text not null default 'today' check (category in ('today', 'process', 'private')),
   status text not null default 'open' check (status in ('open', 'done')),
   source text not null default 'manual' check (source in ('manual', 'screenshot')),
   -- Checkliste fuer Prozess-Aufgaben: [{"id": "...", "text": "...", "done": false}, ...]

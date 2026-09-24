@@ -1,8 +1,10 @@
 const listToday = document.getElementById('listToday');
 const listProcess = document.getElementById('listProcess');
+const listPrivate = document.getElementById('listPrivate');
 const listDone = document.getElementById('listDone');
 const countToday = document.getElementById('countToday');
 const countProcess = document.getElementById('countProcess');
+const countPrivate = document.getElementById('countPrivate');
 const countDone = document.getElementById('countDone');
 const hint = document.getElementById('hint');
 const searchInput = document.getElementById('searchInput');
@@ -95,7 +97,8 @@ function renderTaskItem(task) {
     if (task.status === 'done') {
       const categoryBadge = document.createElement('span');
       categoryBadge.className = 'badge';
-      categoryBadge.textContent = task.category === 'process' ? '🔁 Prozess' : '☀️ Heute';
+      categoryBadge.textContent =
+        task.category === 'process' ? '🔁 Prozess' : task.category === 'private' ? '🔒 Privat' : '☀️ Heute';
       meta.appendChild(categoryBadge);
     }
     if (task.source === 'screenshot') {
@@ -249,6 +252,7 @@ function matchesSearch(task) {
 function renderAll() {
   renderColumn(listToday, countToday, (t) => t.category === 'today' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
   renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
+  renderColumn(listPrivate, countPrivate, (t) => t.category === 'private' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
   renderColumn(listDone, countDone, (t) => t.status === 'done' && matchesSearch(t), byUpdatedAtDesc);
 }
 

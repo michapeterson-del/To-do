@@ -16,7 +16,7 @@ const SUPABASE_ANON_KEY = "DEIN-ANON-KEY";
 const APP_URL = "https://michapeterson-del.github.io/To-do/mobile/";
 
 async function fetchTasks() {
-  const url = `${SUPABASE_URL}/rest/v1/tasks?select=title,category,status,created_at&status=eq.open&order=created_at.asc`;
+  const url = `${SUPABASE_URL}/rest/v1/tasks?select=title,category,status,created_at&status=eq.open&category=eq.today&order=created_at.asc`;
   const req = new Request(url);
   req.headers = {
     apikey: SUPABASE_ANON_KEY,

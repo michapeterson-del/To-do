@@ -322,6 +322,17 @@
         <ul class="task-list" id="listProcess"></ul>
       </section>
 
+      <section class="section">
+        <div class="section-header">
+          <h2>Privat</h2>
+          <span class="count" id="countPrivate">0</span>
+        </div>
+        <form class="add-form" data-category="private">
+          <input type="text" placeholder="Neue private Aufgabe..." maxlength="200" required />
+        </form>
+        <ul class="task-list" id="listPrivate"></ul>
+      </section>
+
       <p class="hint" id="hint"></p>
     </main>
 
@@ -401,6 +412,7 @@
             <div class="capture-category-toggle" id="captureCategoryToggle">
               <button type="button" class="capture-cat-btn" data-category="today">☀️ Heute</button>
               <button type="button" class="capture-cat-btn" data-category="process">🔁 Prozess/Optimierung</button>
+              <button type="button" class="capture-cat-btn" data-category="private">🔒 Privat</button>
             </div>
           </div>
 
@@ -419,9 +431,11 @@
 
       const listToday = document.getElementById('listToday');
       const listProcess = document.getElementById('listProcess');
+      const listPrivate = document.getElementById('listPrivate');
       const listDone = document.getElementById('listDone');
       const countToday = document.getElementById('countToday');
       const countProcess = document.getElementById('countProcess');
+      const countPrivate = document.getElementById('countPrivate');
       const countDone = document.getElementById('countDone');
       const hint = document.getElementById('hint');
       const searchInput = document.getElementById('searchInput');
@@ -680,7 +694,8 @@
         if (task.status === 'done') {
           const categoryBadge = document.createElement('span');
           categoryBadge.className = 'badge';
-          categoryBadge.textContent = task.category === 'process' ? '🔁 Prozess' : '☀️ Heute';
+          categoryBadge.textContent =
+            task.category === 'process' ? '🔁 Prozess' : task.category === 'private' ? '🔒 Privat' : '☀️ Heute';
           body.appendChild(categoryBadge);
         }
         if (task.source === 'screenshot') {
@@ -710,6 +725,7 @@
       function renderAll() {
         renderColumn(listToday, countToday, (t) => t.category === 'today' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
         renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
+        renderColumn(listPrivate, countPrivate, (t) => t.category === 'private' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
         renderColumn(listDone, countDone, (t) => t.status === 'done' && matchesSearch(t), byUpdatedAtDesc);
       }
 
@@ -823,7 +839,7 @@
       }
 
       function setCaptureCategory(category) {
-        captureCategory = category === 'process' ? 'process' : 'today';
+        captureCategory = category === 'process' || category === 'private' ? category : 'today';
         captureCategoryToggle.querySelectorAll('.capture-cat-btn').forEach((btn) => {
           btn.classList.toggle('active', btn.dataset.category === captureCategory);
         });

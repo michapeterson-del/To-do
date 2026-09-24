@@ -27,7 +27,7 @@ function showView(view) {
 }
 
 function setCategory(category) {
-  currentCategory = category === 'process' ? 'process' : 'today';
+  currentCategory = category === 'process' || category === 'private' ? category : 'today';
   categoryToggle.querySelectorAll('.cat-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.category === currentCategory);
   });
