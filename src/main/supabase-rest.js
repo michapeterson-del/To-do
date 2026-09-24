@@ -40,7 +40,7 @@ async function createTask(config, task) {
   const payload = {
     title: task.title,
     description: task.description || '',
-    category: task.category === 'process' ? 'process' : 'today',
+    category: ['process', 'private'].includes(task.category) ? task.category : 'today',
     status: 'open',
     source: task.source === 'screenshot' ? 'screenshot' : 'manual',
     steps: Array.isArray(task.steps) ? task.steps : [],
