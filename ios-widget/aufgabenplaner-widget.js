@@ -21,7 +21,6 @@
 
 const SUPABASE_URL = "https://DEINE-PROJEKT-ID.supabase.co";
 const SUPABASE_ANON_KEY = "DEIN-ANON-KEY";
-const APP_URL = "https://michapeterson-del.github.io/To-do/mobile/";
 
 const CATEGORY_INFO = {
   today: { label: "☀️ Heute", icon: "☀️" },
@@ -45,7 +44,6 @@ async function fetchTasks() {
 function createWidget(tasks, errorMessage) {
   const w = new ListWidget();
   w.backgroundColor = new Color("#1c1d2b");
-  w.url = APP_URL;
 
   const header = w.addText(info.label);
   header.font = Font.boldSystemFont(14);
