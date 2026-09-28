@@ -141,6 +141,8 @@ resultView.addEventListener('submit', async (e) => {
       title,
       description: descriptionInput.value.trim(),
       category: currentCategory,
+      event_datetime: lastDraft?.event_datetime || '',
+      event_title: lastDraft?.event_title || '',
     };
   }
 
