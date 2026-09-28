@@ -44,7 +44,9 @@ async function caldavRequest(url, { method, depth, body, auth }) {
       redirect: 'manual',
       headers: {
         Authorization: authHeader,
-        'Content-Type': 'application/xml; charset=utf-8',
+        'Content-Type': 'text/xml; charset="utf-8"',
+        Accept: '*/*',
+        'User-Agent': 'Aufgabenplaner-CalDAV/1.0',
         ...(depth !== undefined ? { Depth: String(depth) } : {}),
       },
       body,
@@ -68,7 +70,11 @@ async function propfind(url, propBody, auth, depth) {
   const text = await res.text();
   if (res.status !== 207) {
     const detail = text.replace(/\s+/g, ' ').trim().slice(0, 300);
-    throw new Error(`iCloud-Anfrage fehlgeschlagen (${res.status}) bei ${url}. Antwort: ${detail || '(leer)'}`);
+    const wwwAuth = res.headers.get('www-authenticate') || '(keiner)';
+    throw new Error(
+      `iCloud-Anfrage fehlgeschlagen (${res.status} ${res.statusText}) bei ${url}. ` +
+        `WWW-Authenticate: ${wwwAuth}. Antwort: ${detail || '(leer)'}`
+    );
   }
   return { text, finalUrl };
 }
