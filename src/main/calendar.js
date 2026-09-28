@@ -190,8 +190,13 @@ async function addEventViaIcsFile(payload) {
 
 async function addCalendarEvent(config, payload) {
   if (config.icloudEmail && config.icloudAppPassword) {
-    await addEventViaCalDav(payload, { email: config.icloudEmail, password: config.icloudAppPassword });
-    return;
+    try {
+      await addEventViaCalDav(payload, { email: config.icloudEmail, password: config.icloudAppPassword });
+      return;
+    } catch (err) {
+      console.error('iCloud CalDAV fehlgeschlagen, weiche auf .ics-Datei aus:', err);
+      // Fall through to the .ics fallback below instead of failing outright.
+    }
   }
   if (process.platform === 'darwin') {
     await addEventMac(payload);
