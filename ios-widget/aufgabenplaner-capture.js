@@ -124,11 +124,12 @@ async function analyzeScreenshot(base64Png, existingTasks) {
 }
 
 async function showAlert(title, message) {
-  const alert = new Alert();
-  alert.title = title;
-  if (message) alert.message = message;
-  alert.addAction("OK");
-  await alert.present();
+  // Ueber die Action-Taste/Siri sind interaktive Alerts nicht erlaubt -
+  // eine Benachrichtigung funktioniert dagegen ueberall.
+  const n = new Notification();
+  n.title = title;
+  if (message) n.body = message;
+  await n.schedule();
 }
 
 async function main() {
