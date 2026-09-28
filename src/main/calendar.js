@@ -65,10 +65,11 @@ function extractHref(xmlBlock) {
 
 async function propfind(url, propBody, auth, depth) {
   const { res, finalUrl } = await caldavRequest(url, { method: 'PROPFIND', depth, auth, body: propBody });
-  if (res.status !== 207) {
-    throw new Error(`iCloud-Anfrage fehlgeschlagen (${res.status}). Pruefe Apple-ID und App-Passwort.`);
-  }
   const text = await res.text();
+  if (res.status !== 207) {
+    const detail = text.replace(/\s+/g, ' ').trim().slice(0, 300);
+    throw new Error(`iCloud-Anfrage fehlgeschlagen (${res.status}) bei ${url}. Antwort: ${detail || '(leer)'}`);
+  }
   return { text, finalUrl };
 }
 
