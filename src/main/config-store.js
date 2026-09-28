@@ -10,6 +10,8 @@ const DEFAULTS = {
   anthropicApiKey: '',
   claudeModel: 'claude-sonnet-5',
   hotkey: 'CommandOrControl+Shift+T',
+  icloudEmail: '',
+  icloudAppPassword: '',
 };
 
 function configPath() {

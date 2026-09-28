@@ -76,7 +76,8 @@ function registerIpcHandlers({ registerHotkey }) {
   });
 
   ipcMain.handle('calendar:addEvent', (_event, { title, datetime }) => {
-    return addCalendarEvent({ title, datetime });
+    const config = readConfig();
+    return addCalendarEvent(config, { title, datetime });
   });
 }
 
