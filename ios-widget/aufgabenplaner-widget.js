@@ -21,6 +21,7 @@
 
 const SUPABASE_URL = "https://DEINE-PROJEKT-ID.supabase.co";
 const SUPABASE_ANON_KEY = "DEIN-ANON-KEY";
+const APP_URL = "https://michapeterson-del.github.io/To-do/mobile/";
 
 const CATEGORY_INFO = {
   today: { label: "☀️ Heute", icon: "☀️" },
@@ -131,10 +132,11 @@ function createHomeScreenWidget(tasks, errorMessage) {
 }
 
 function createWidget(tasks, errorMessage) {
-  if (LOCK_SCREEN_FAMILIES.includes(config.widgetFamily)) {
-    return createLockScreenWidget(tasks, errorMessage);
-  }
-  return createHomeScreenWidget(tasks, errorMessage);
+  const w = LOCK_SCREEN_FAMILIES.includes(config.widgetFamily)
+    ? createLockScreenWidget(tasks, errorMessage)
+    : createHomeScreenWidget(tasks, errorMessage);
+  w.url = APP_URL;
+  return w;
 }
 
 let tasks = [];
