@@ -147,6 +147,15 @@ async function main() {
   const base64Png = Data.fromPNG(image).toBase64String();
   const fallbackNote = usedFallback ? " ⚠️ Fotos-Fallback genutzt, nicht der frische Screenshot!" : "";
 
+  // DEBUG: speichert eine Kopie des Bildes, das analysiert wird, in die
+  // Fotos-App, damit man nachschauen kann, was das Script wirklich bekommt.
+  // Kann spaeter wieder entfernt werden.
+  try {
+    Photos.save(image);
+  } catch (e) {
+    // Speichern fehlgeschlagen ist nicht kritisch, einfach ignorieren.
+  }
+
   const existingTasks = await fetchOpenTasks();
 
   let parsed;
