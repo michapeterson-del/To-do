@@ -116,6 +116,28 @@
       .task-body { flex: 1; min-width: 0; }
       .task-title { font-size: 15px; outline: none; word-break: break-word; }
       .task-item.done .task-title { text-decoration: line-through; color: var(--done); }
+      .event-details {
+        margin-top: 4px;
+        font-size: 12px;
+      }
+      .event-details summary {
+        cursor: pointer;
+        color: var(--accent);
+        font-weight: 500;
+        list-style: none;
+      }
+      .event-details summary::-webkit-details-marker {
+        display: none;
+      }
+      .event-details[open] summary {
+        margin-bottom: 6px;
+      }
+      .event-details .btn {
+        display: inline-block;
+        font-size: 12px;
+        padding: 6px 10px;
+        text-decoration: none;
+      }
       .task-description {
         white-space: pre-wrap;
         font-size: 13px;
@@ -659,6 +681,47 @@
         return wrap;
       }
 
+      function formatEventLabel(datetime) {
+        const date = new Date(datetime);
+        if (Number.isNaN(date.getTime())) return datetime;
+        return date.toLocaleString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      }
+
+      function buildIcs(title, datetime) {
+        const start = datetime.replace(/[-:]/g, '');
+        const escaped = String(title).replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n');
+        return [
+          'BEGIN:VCALENDAR',
+          'VERSION:2.0',
+          'PRODID:-//Aufgabenplaner//DE',
+          'BEGIN:VEVENT',
+          `UID:${Date.now()}@aufgabenplaner`,
+          `DTSTART:${start}`,
+          `SUMMARY:${escaped}`,
+          'END:VEVENT',
+          'END:VCALENDAR',
+          '',
+        ].join('\r\n');
+      }
+
+      function renderEventDetails(task) {
+        const details = document.createElement('details');
+        details.className = 'event-details';
+
+        const summary = document.createElement('summary');
+        summary.textContent = `📅 Termin: ${formatEventLabel(task.event_datetime)}`;
+        details.appendChild(summary);
+
+        const link = document.createElement('a');
+        link.className = 'btn';
+        link.textContent = 'Zum Kalender hinzufuegen';
+        link.download = 'termin.ics';
+        link.href = `data:text/calendar;charset=utf-8,${encodeURIComponent(buildIcs(task.event_title || task.title, task.event_datetime))}`;
+        details.appendChild(link);
+
+        return details;
+      }
+
       function renderTaskItem(task) {
         const li = document.createElement('li');
         li.className = 'task-item' + (task.status === 'done' ? ' done' : '');
@@ -690,6 +753,10 @@
         body.appendChild(renderDescription(task));
 
         body.appendChild(renderStepList(task));
+
+        if (task.event_datetime) {
+          body.appendChild(renderEventDetails(task));
+        }
 
         if (task.status === 'done') {
           const categoryBadge = document.createElement('span');
@@ -921,9 +988,14 @@ naechste Schritt wird erwartet, ggf. Frist). Wiederhole notfalls Inhalte aus
 dem Titel in eigenen Worten, aber liefere IMMER mindestens einen
 vollstaendigen Satz.
 
+Pruefe ausserdem, ob im Foto ein konkreter Termin mit Datum UND Uhrzeit
+genannt wird (z.B. "Meeting Montag 14 Uhr", "Termin am 3.10. um 10:30").
+Falls ja: "event_datetime" im Format JJJJ-MM-TTTHH:MM:00, sonst leerer
+String. "event_title" ist dann ein kurzer Terminname, sonst leerer String.
+
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt in genau diesem Format, ohne
 weiteren Text, ohne Markdown-Codeblock:
-{"action": "create, update oder duplicate", "matched_task_id": "id der passenden Aufgabe oder null", "title": "kurzer Aufgabentitel (bei create)", "description": "1-2 Saetze Kontext (bei create)", "category": "today, process oder private (bei create)", "update_note": "neuer Schritt (nur bei update)"}`;
+{"action": "create, update oder duplicate", "matched_task_id": "id der passenden Aufgabe oder null", "title": "kurzer Aufgabentitel (bei create)", "description": "1-2 Saetze Kontext (bei create)", "category": "today, process oder private (bei create)", "update_note": "neuer Schritt (nur bei update)", "event_datetime": "JJJJ-MM-TTTHH:MM:00 oder leerer String (bei create)", "event_title": "kurzer Terminname oder leerer String (bei create)"}`;
       }
 
       function parseVisionJson(raw, existingTasks) {
@@ -949,7 +1021,16 @@ weiteren Text, ohne Markdown-Codeblock:
           if (!title) throw new Error('Auf dem Foto wurde keine erkennbare Aufgabe gefunden.');
           const description = String(parsed.description || '').slice(0, 1000).trim() || title;
           const category = ['process', 'private'].includes(parsed.category) ? parsed.category : 'today';
-          return { action: 'create', title, description, category };
+          const eventDatetime = String(parsed.event_datetime || '').trim();
+          const eventTitle = String(parsed.event_title || '').slice(0, 200).trim();
+          return {
+            action: 'create',
+            title,
+            description,
+            category,
+            event_datetime: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(eventDatetime) ? eventDatetime : '',
+            event_title: eventTitle || title,
+          };
         }
 
         const matchedTask = existingTasks.find((t) => t.id === matchedTaskId);
@@ -1073,6 +1154,8 @@ weiteren Text, ohne Markdown-Codeblock:
               status: 'open',
               source: 'screenshot',
               steps: [],
+              event_datetime: captureLastDraft?.event_datetime || null,
+              event_title: captureLastDraft?.event_title || null,
             };
             await apiRequest('POST', 'tasks', payload, 'return=representation');
           }

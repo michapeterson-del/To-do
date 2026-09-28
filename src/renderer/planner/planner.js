@@ -91,6 +91,10 @@ function renderTaskItem(task) {
   body.appendChild(renderDescription(task));
   body.appendChild(renderStepList(task));
 
+  if (task.event_datetime) {
+    body.appendChild(renderEventDetails(task));
+  }
+
   if (task.source === 'screenshot' || task.status === 'done') {
     const meta = document.createElement('div');
     meta.className = 'task-meta';
@@ -241,6 +245,40 @@ function renderStepList(task) {
   wrap.appendChild(form);
 
   return wrap;
+}
+
+function formatEventLabel(datetime) {
+  const date = new Date(datetime);
+  if (Number.isNaN(date.getTime())) return datetime;
+  return date.toLocaleString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function renderEventDetails(task) {
+  const details = document.createElement('details');
+  details.className = 'event-details';
+
+  const summary = document.createElement('summary');
+  summary.textContent = `📅 Termin: ${formatEventLabel(task.event_datetime)}`;
+  details.appendChild(summary);
+
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'btn btn-ghost';
+  addBtn.textContent = 'Zum Kalender hinzufuegen';
+  addBtn.addEventListener('click', async () => {
+    addBtn.disabled = true;
+    addBtn.textContent = 'Wird hinzugefuegt...';
+    try {
+      await window.api.calendar.addEvent({ title: task.event_title || task.title, datetime: task.event_datetime });
+      addBtn.textContent = '✓ Hinzugefuegt';
+    } catch (err) {
+      addBtn.disabled = false;
+      addBtn.textContent = `Fehler: ${err.message || err}`;
+    }
+  });
+  details.appendChild(addBtn);
+
+  return details;
 }
 
 function matchesSearch(task) {

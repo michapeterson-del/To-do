@@ -52,7 +52,14 @@ function registerIpcHandlers({ registerHotkey }) {
       const newStep = { id: `s${Date.now()}`, text: draft.update_note, done: false };
       task = await updateTask(config, draft.matched_task_id, { steps: [...existingSteps, newStep] });
     } else {
-      task = await createTask(config, { title: draft.title, description: draft.description, category: draft.category, source: 'screenshot' });
+      task = await createTask(config, {
+        title: draft.title,
+        description: draft.description,
+        category: draft.category,
+        source: 'screenshot',
+        event_datetime: draft.event_datetime,
+        event_title: draft.event_title,
+      });
     }
     closeCaptureWindow();
     const planner = getPlannerWindow();
