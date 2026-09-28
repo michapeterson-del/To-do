@@ -15,6 +15,9 @@ const saveAsNewBtn = document.getElementById('saveAsNewBtn');
 const resultActions = document.getElementById('resultActions');
 const submitBtn = document.getElementById('submitBtn');
 const saveErrorText = document.getElementById('saveErrorText');
+const eventNotice = document.getElementById('eventNotice');
+const eventLabel = document.getElementById('eventLabel');
+const addEventBtn = document.getElementById('addEventBtn');
 
 let currentCategory = 'today';
 let mode = 'create'; // 'create' | 'update' | 'duplicate'
@@ -45,6 +48,28 @@ categoryToggle.querySelectorAll('.cat-btn').forEach((btn) => {
   btn.addEventListener('click', () => setCategory(btn.dataset.category));
 });
 
+function formatEventLabel(datetime) {
+  const date = new Date(datetime);
+  if (Number.isNaN(date.getTime())) return datetime;
+  return date.toLocaleString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+addEventBtn.addEventListener('click', async () => {
+  if (!lastDraft?.event_datetime) return;
+  addEventBtn.disabled = true;
+  try {
+    await window.api.calendar.addEvent({
+      title: lastDraft.event_title || titleInput.value.trim() || 'Termin',
+      datetime: lastDraft.event_datetime,
+    });
+  } catch (err) {
+    saveErrorText.textContent = `Termin konnte nicht erstellt werden: ${err.message || err}`;
+    saveErrorText.hidden = false;
+  } finally {
+    addEventBtn.disabled = false;
+  }
+});
+
 showView('analyzing');
 
 window.api.capture.onAnalyzing(() => {
@@ -65,6 +90,12 @@ window.api.capture.onResult((draft) => {
     titleInput.value = draft.title || '';
     descriptionInput.value = draft.description || '';
     setCategory(draft.category);
+  }
+  if (draft.event_datetime) {
+    eventNotice.hidden = false;
+    eventLabel.textContent = formatEventLabel(draft.event_datetime);
+  } else {
+    eventNotice.hidden = true;
   }
   showView('result');
   if (mode === 'create') {

@@ -3,6 +3,7 @@ const { readConfig, writeConfig, isConfigured } = require('./config-store');
 const { listTasks, createTask, updateTask, deleteTask } = require('./supabase-rest');
 const { closeCaptureWindow, getPlannerWindow, createSettingsWindow, closeSelectionWindow } = require('./windows');
 const { runCaptureFlow, analyzeRegionAndShowResult } = require('./capture-flow');
+const { addCalendarEvent } = require('./calendar');
 
 function registerIpcHandlers({ registerHotkey }) {
   ipcMain.handle('settings:get', () => readConfig());
@@ -72,6 +73,10 @@ function registerIpcHandlers({ registerHotkey }) {
 
   ipcMain.handle('selection:cancel', () => {
     closeSelectionWindow();
+  });
+
+  ipcMain.handle('calendar:addEvent', (_event, { title, datetime }) => {
+    return addCalendarEvent({ title, datetime });
   });
 }
 

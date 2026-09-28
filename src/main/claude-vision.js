@@ -42,9 +42,15 @@ Antwort/welcher naechste Schritt wird erwartet, ggf. Frist). Wiederhole
 notfalls Inhalte aus dem Titel in eigenen Worten, aber liefere IMMER
 mindestens einen vollstaendigen Satz.
 
+Pruefe ausserdem, ob im Screenshot ein konkreter Termin mit Datum UND
+Uhrzeit genannt wird (z.B. "Meeting Montag 14 Uhr", "Termin am 3.10. um
+10:30"). Falls ja: "event_datetime" im Format JJJJ-MM-TTTHH:MM:00, sonst
+leerer String. "event_title" ist dann ein kurzer Terminname, sonst leerer
+String.
+
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt in genau diesem Format, ohne
 weiteren Text, ohne Markdown-Codeblock:
-{"action": "create, update oder duplicate", "matched_task_id": "id der passenden Aufgabe oder null", "title": "kurzer Aufgabentitel (bei create)", "description": "1-2 Saetze Kontext (bei create)", "category": "today, process oder private (bei create)", "update_note": "neuer Schritt (nur bei update)"}`;
+{"action": "create, update oder duplicate", "matched_task_id": "id der passenden Aufgabe oder null", "title": "kurzer Aufgabentitel (bei create)", "description": "1-2 Saetze Kontext (bei create)", "category": "today, process oder private (bei create)", "update_note": "neuer Schritt (nur bei update)", "event_datetime": "JJJJ-MM-TTTHH:MM:00 oder leerer String (bei create)", "event_title": "kurzer Terminname oder leerer String (bei create)"}`;
 }
 
 function parseTaskJson(raw, existingTasks) {
@@ -78,7 +84,16 @@ function parseTaskJson(raw, existingTasks) {
     }
     const description = String(parsed.description || '').slice(0, 1000).trim() || title;
     const category = ['process', 'private'].includes(parsed.category) ? parsed.category : 'today';
-    return { action: 'create', title, description, category };
+    const eventDatetime = String(parsed.event_datetime || '').trim();
+    const eventTitle = String(parsed.event_title || '').slice(0, 200).trim();
+    return {
+      action: 'create',
+      title,
+      description,
+      category,
+      event_datetime: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(eventDatetime) ? eventDatetime : '',
+      event_title: eventTitle || title,
+    };
   }
 
   const matchedTask = existingTasks.find((t) => t.id === matchedTaskId);
