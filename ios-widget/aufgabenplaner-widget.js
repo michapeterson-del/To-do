@@ -41,7 +41,53 @@ async function fetchTasks() {
   return await req.loadJSON();
 }
 
-function createWidget(tasks, errorMessage) {
+const LOCK_SCREEN_FAMILIES = ["accessoryRectangular", "accessoryCircular", "accessoryInline"];
+
+function createLockScreenWidget(tasks, errorMessage) {
+  const w = new ListWidget();
+
+  if (config.widgetFamily === "accessoryInline") {
+    // Nur eine einzige Textzeile moeglich.
+    w.addText(errorMessage ? "Fehler" : !tasks.length ? "Keine Aufgaben" : `${info.icon} ${tasks[0].title}`);
+    return w;
+  }
+
+  if (config.widgetFamily === "accessoryCircular") {
+    const t = w.addText(errorMessage ? "!" : String(tasks.length));
+    t.font = Font.boldSystemFont(22);
+    t.centerAlignText();
+    return w;
+  }
+
+  // accessoryRectangular: sehr wenig Platz, max. 2 kurze Zeilen.
+  const header = w.addText(info.label);
+  header.font = Font.mediumSystemFont(12);
+
+  if (errorMessage) {
+    const t = w.addText("Fehler beim Laden");
+    t.font = Font.systemFont(11);
+    return w;
+  }
+
+  if (!tasks.length) {
+    const t = w.addText("Keine offenen Aufgaben 🎉");
+    t.font = Font.systemFont(11);
+    return w;
+  }
+
+  const first = w.addText(tasks[0].title);
+  first.font = Font.systemFont(11);
+  first.lineLimit = 1;
+
+  if (tasks.length > 1) {
+    const more = w.addText(`+${tasks.length - 1} weitere`);
+    more.font = Font.systemFont(10);
+  }
+
+  return w;
+}
+
+function createHomeScreenWidget(tasks, errorMessage) {
   const w = new ListWidget();
   w.backgroundColor = new Color("#1c1d2b");
 
@@ -82,6 +128,13 @@ function createWidget(tasks, errorMessage) {
   }
 
   return w;
+}
+
+function createWidget(tasks, errorMessage) {
+  if (LOCK_SCREEN_FAMILIES.includes(config.widgetFamily)) {
+    return createLockScreenWidget(tasks, errorMessage);
+  }
+  return createHomeScreenWidget(tasks, errorMessage);
 }
 
 let tasks = [];
