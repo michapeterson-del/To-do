@@ -167,7 +167,7 @@ async function main() {
 
   if (action === "duplicate") {
     const matched = existingTasks.find((t) => t.id === matchedTaskId);
-    await showAlert("Gibt's schon", `Nichts Neues zu: ${matched ? matched.title : "?"}`);
+    await showAlert("Gibt's schon", `Nichts Neues zu: ${matched ? matched.title : "?"}${fallbackNote}`);
     return;
   }
 
@@ -175,7 +175,7 @@ async function main() {
     const matched = existingTasks.find((t) => t.id === matchedTaskId);
     const updateNote = String(parsed.update_note || "").trim();
     if (!updateNote) {
-      await showAlert("Gibt's schon", `Nichts Neues zu: ${matched ? matched.title : "?"}`);
+      await showAlert("Gibt's schon", `Nichts Neues zu: ${matched ? matched.title : "?"}${fallbackNote}`);
       return;
     }
     const existingSteps = Array.isArray(matched.steps) ? matched.steps : [];
@@ -184,14 +184,14 @@ async function main() {
       steps: [...existingSteps, newStep],
     });
     await req.loadJSON();
-    await showAlert("Aktualisiert", `${matched.title}\n+ ${updateNote}`);
+    await showAlert("Aktualisiert", `${matched.title}\n+ ${updateNote}${fallbackNote}`);
     return;
   }
 
   // action === "create"
   const title = String(parsed.title || "").slice(0, 200).trim();
   if (!title) {
-    await showAlert("Nichts erkannt", "Auf dem Screenshot wurde keine Aufgabe gefunden.");
+    await showAlert("Nichts erkannt", "Auf dem Screenshot wurde keine Aufgabe gefunden." + fallbackNote);
     return;
   }
   const description = String(parsed.description || "").slice(0, 1000).trim() || title;
