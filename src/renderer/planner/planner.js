@@ -114,6 +114,24 @@ function renderTaskItem(task) {
     body.appendChild(meta);
   }
 
+  const moveSelect = document.createElement('select');
+  moveSelect.className = 'task-move';
+  moveSelect.title = 'In andere Kategorie verschieben';
+  [
+    { value: 'today', label: '☀️ Heute' },
+    { value: 'process', label: '🔁 Prozess' },
+    { value: 'private', label: '🔒 Privat' },
+  ].forEach(({ value, label }) => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = label;
+    moveSelect.appendChild(option);
+  });
+  moveSelect.value = task.category;
+  moveSelect.addEventListener('change', () => {
+    updateTask(task.id, { category: moveSelect.value });
+  });
+
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'task-delete';
   deleteBtn.textContent = '✕';
@@ -122,6 +140,7 @@ function renderTaskItem(task) {
 
   li.appendChild(checkbox);
   li.appendChild(body);
+  li.appendChild(moveSelect);
   li.appendChild(deleteBtn);
   return li;
 }

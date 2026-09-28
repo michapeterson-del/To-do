@@ -387,6 +387,18 @@ body {
   padding: 1px 7px;
 }
 
+.task-move {
+  align-self: flex-start;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  border-radius: 6px;
+  font-size: 10.5px;
+  padding: 2px 4px;
+  cursor: pointer;
+  max-width: 90px;
+}
+
 .task-delete {
   border: none;
   background: transparent;
