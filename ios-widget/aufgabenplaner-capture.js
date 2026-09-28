@@ -134,7 +134,9 @@ async function showAlert(title, message) {
 
 async function main() {
   let image = Array.isArray(args.images) ? args.images[0] : null;
+  let usedFallback = false;
   if (!image) {
+    usedFallback = true;
     const screenshots = await Photos.latestScreenshots(1);
     if (!screenshots.length) {
       await showAlert("Kein Screenshot gefunden", "Mach zuerst einen Screenshot.");
@@ -143,6 +145,7 @@ async function main() {
     image = screenshots[0];
   }
   const base64Png = Data.fromPNG(image).toBase64String();
+  const fallbackNote = usedFallback ? " ⚠️ Fotos-Fallback genutzt, nicht der frische Screenshot!" : "";
 
   const existingTasks = await fetchOpenTasks();
 
@@ -210,7 +213,7 @@ async function main() {
   const req = supabaseRequest("POST", "tasks", payload);
   await req.loadJSON();
 
-  await showAlert("Aufgabe gespeichert", title);
+  await showAlert("Aufgabe gespeichert", title + fallbackNote);
 }
 
 await main();
