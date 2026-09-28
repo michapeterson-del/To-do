@@ -16,17 +16,24 @@ function buildPrompt(existingTasks) {
 Hier ist eine Liste seiner aktuell offenen Aufgaben (JSON):
 ${JSON.stringify(tasksForPrompt)}
 
-Pruefe zuerst, ob der Screenshot zu einer dieser bestehenden Aufgaben gehoert
-(gleiches Thema/gleiche Sache, auch wenn der Wortlaut etwas anders ist):
+Pruefe zuerst SEHR STRENG, ob der Screenshot zu einer dieser bestehenden
+Aufgaben gehoert. Das ist NUR der Fall, wenn es sich um denselben konkreten
+Vorgang handelt (z.B. dieselbe Bestellung, derselbe Termin, dasselbe
+Gespraech mit derselben Person zum selben Thema) - nicht schon deshalb,
+weil beide irgendwie geschaeftlich/aehnlich klingen oder zum selben groben
+Themenbereich gehoeren. Im Zweifel IMMER action = "create" waehlen statt
+eine thematisch nicht wirklich passende Aufgabe zu erweitern.
 
-- Falls ja UND der Screenshot neue Information zeigt, die die Aufgabe
-  voranbringt (z.B. eine Antwort, ein neuer Status, ein naechster Schritt):
-  action = "update". "update_note" ist dieser neue Schritt, kurz und konkret
-  formuliert (wird als neuer Checklisten-Punkt an die Aufgabe angehaengt).
-- Falls ja, aber der Screenshot zeigt nichts Neues (einfach dieselbe Sache
-  nochmal): action = "duplicate".
-- Falls der Screenshot zu KEINER bestehenden Aufgabe passt: action = "create".
-  Erkenne dann daraus EINE konkrete, umsetzbare neue Aufgabe.
+- Falls es WIRKLICH derselbe Vorgang ist UND der Screenshot neue
+  Information zeigt, die die Aufgabe voranbringt (z.B. eine Antwort, ein
+  neuer Status, ein naechster Schritt): action = "update". "update_note"
+  ist dieser neue Schritt, kurz und konkret formuliert (wird als neuer
+  Checklisten-Punkt an die Aufgabe angehaengt).
+- Falls es derselbe Vorgang ist, aber der Screenshot zeigt nichts Neues
+  (einfach dieselbe Sache nochmal): action = "duplicate".
+- Falls der Screenshot zu KEINER bestehenden Aufgabe passt (der Normalfall
+  bei einem neuen Thema): action = "create". Erkenne dann daraus EINE
+  konkrete, umsetzbare neue Aufgabe.
 
 Bei "create" oder wenn du unsicher bist, ob es eine bestehende Aufgabe ist,
 entscheide bei der Kategorie:
