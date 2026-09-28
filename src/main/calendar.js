@@ -1,12 +1,13 @@
 // Legt einen erkannten Termin direkt im Kalender an.
 //
 // Reihenfolge:
-// 1. iCloud CalDAV, falls Apple-ID + App-spezifisches Passwort hinterlegt
-//    sind - traegt den Termin direkt bei Apple ein (erscheint automatisch
-//    auf allen Geraeten inkl. iPhone), kein lokales Programm noetig.
+// 1. Windows: per PowerShell/COM direkt in die laufende Outlook-Installation
+//    (kein Dialog, kein Import-Klick).
 // 2. Mac: per AppleScript direkt in Kalender.app (kein Import-Dialog).
-// 3. Sonst: .ics-Datei, die mit dem Standard-Kalenderprogramm geoeffnet
-//    wird (ein Bestaetigungsklick noetig).
+// 3. iCloud CalDAV, falls Apple-ID + App-spezifisches Passwort hinterlegt
+//    sind (fuer den Fall, dass kein Outlook/Mac-Kalender genutzt wird).
+// 4. Sonst/Fallback: .ics-Datei, die mit dem Standard-Kalenderprogramm
+//    geoeffnet wird (ein Bestaetigungsklick noetig).
 
 const fs = require('fs');
 const os = require('os');
@@ -177,6 +178,43 @@ async function addEventMac({ title, datetime }) {
   await runAppleScript(script);
 }
 
+// --- Windows: Outlook per COM/PowerShell ------------------------------
+
+function escapePowerShellSingleQuoted(text) {
+  return String(text).replace(/'/g, "''");
+}
+
+function runPowerShell(script) {
+  return new Promise((resolve, reject) => {
+    execFile(
+      'powershell',
+      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script],
+      (err, stdout, stderr) => {
+        if (err) reject(new Error(stderr || err.message));
+        else resolve(stdout);
+      }
+    );
+  });
+}
+
+async function addEventOutlook({ title, datetime }) {
+  const [, y, mo, d, h, mi] = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):\d{2}$/.exec(datetime) || [];
+  if (!y) throw new Error('Ungueltiges Termin-Datum.');
+  const safeTitle = escapePowerShellSingleQuoted(title);
+  const startStr = `${y}-${mo}-${d} ${h}:${mi}:00`;
+
+  const script = `
+    $ol = New-Object -ComObject Outlook.Application
+    $appt = $ol.CreateItem(1)
+    $appt.Subject = '${safeTitle}'
+    $appt.Start = [datetime]::Parse('${startStr}')
+    $appt.Duration = 30
+    $appt.ReminderSet = $true
+    $appt.Save()
+  `;
+  await runPowerShell(script);
+}
+
 // --- Fallback: .ics-Datei oeffnen --------------------------------------
 
 async function addEventViaIcsFile(payload) {
@@ -189,18 +227,25 @@ async function addEventViaIcsFile(payload) {
 // --- Einstiegspunkt ------------------------------------------------------
 
 async function addCalendarEvent(config, payload) {
+  if (process.platform === 'win32') {
+    try {
+      await addEventOutlook(payload);
+      return;
+    } catch (err) {
+      console.error('Outlook-Automatisierung fehlgeschlagen, weiche auf .ics-Datei aus:', err);
+    }
+  }
+  if (process.platform === 'darwin') {
+    await addEventMac(payload);
+    return;
+  }
   if (config.icloudEmail && config.icloudAppPassword) {
     try {
       await addEventViaCalDav(payload, { email: config.icloudEmail, password: config.icloudAppPassword });
       return;
     } catch (err) {
       console.error('iCloud CalDAV fehlgeschlagen, weiche auf .ics-Datei aus:', err);
-      // Fall through to the .ics fallback below instead of failing outright.
     }
-  }
-  if (process.platform === 'darwin') {
-    await addEventMac(payload);
-    return;
   }
   await addEventViaIcsFile(payload);
 }
