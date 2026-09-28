@@ -1,11 +1,12 @@
 // Legt einen erkannten Termin direkt im Kalender an.
 //
 // Reihenfolge:
-// 1. Windows: per PowerShell/COM direkt in die laufende Outlook-Installation
+// 1. iCloud CalDAV (ueber die tsdav-Bibliothek), falls Apple-ID +
+//    App-spezifisches Passwort hinterlegt sind - traegt den Termin direkt
+//    bei Apple ein, erscheint automatisch auf allen Geraeten inkl. iPhone.
+// 2. Windows: per PowerShell/COM direkt in die laufende Outlook-Installation
 //    (kein Dialog, kein Import-Klick).
-// 2. Mac: per AppleScript direkt in Kalender.app (kein Import-Dialog).
-// 3. iCloud CalDAV, falls Apple-ID + App-spezifisches Passwort hinterlegt
-//    sind (fuer den Fall, dass kein Outlook/Mac-Kalender genutzt wird).
+// 3. Mac: per AppleScript direkt in Kalender.app (kein Import-Dialog).
 // 4. Sonst/Fallback: .ics-Datei, die mit dem Standard-Kalenderprogramm
 //    geoeffnet wird (ein Bestaetigungsklick noetig).
 
@@ -34,109 +35,31 @@ function buildIcs({ title, datetime }) {
   return { uid, ics };
 }
 
-// --- iCloud CalDAV ---------------------------------------------------
+// --- iCloud CalDAV (per tsdav-Bibliothek) -------------------------------
 
-async function caldavRequest(url, { method, depth, body, auth }) {
-  const authHeader = 'Basic ' + Buffer.from(`${auth.email}:${auth.password}`).toString('base64');
-  let currentUrl = url;
-  for (let i = 0; i < 6; i++) {
-    const res = await fetch(currentUrl, {
-      method,
-      redirect: 'manual',
-      headers: {
-        Authorization: authHeader,
-        'Content-Type': 'text/xml; charset="utf-8"',
-        Accept: '*/*',
-        'User-Agent': 'Aufgabenplaner-CalDAV/1.0',
-        ...(depth !== undefined ? { Depth: String(depth) } : {}),
-      },
-      body,
-    });
-    if ([301, 302, 307, 308].includes(res.status) && res.headers.get('location')) {
-      currentUrl = new URL(res.headers.get('location'), currentUrl).toString();
-      continue;
-    }
-    return { res, finalUrl: currentUrl };
-  }
-  throw new Error('Zu viele Weiterleitungen bei der iCloud-Anfrage.');
-}
-
-function extractHref(xmlBlock) {
-  const match = /<[^<>]*:?href[^<>]*>([^<]+)<\/[^<>]*:?href>/i.exec(xmlBlock);
-  return match ? match[1].trim() : null;
-}
-
-async function propfind(url, propBody, auth, depth) {
-  const { res, finalUrl } = await caldavRequest(url, { method: 'PROPFIND', depth, auth, body: propBody });
-  const text = await res.text();
-  if (res.status !== 207) {
-    const detail = text.replace(/\s+/g, ' ').trim().slice(0, 300);
-    const wwwAuth = res.headers.get('www-authenticate') || '(keiner)';
-    throw new Error(
-      `iCloud-Anfrage fehlgeschlagen (${res.status} ${res.statusText}) bei ${url}. ` +
-        `WWW-Authenticate: ${wwwAuth}. Antwort: ${detail || '(leer)'}`
-    );
-  }
-  return { text, finalUrl };
-}
-
-async function discoverCalendarUrl(auth) {
-  const principalBody =
-    '<?xml version="1.0" encoding="utf-8" ?><D:propfind xmlns:D="DAV:">' +
-    '<D:prop><D:current-user-principal/></D:prop></D:propfind>';
-  const { text: principalXml, finalUrl: principalHost } = await propfind(
-    'https://caldav.icloud.com/',
-    principalBody,
-    auth,
-    0
-  );
-  const principalHref = extractHref(principalXml);
-  if (!principalHref) throw new Error('Konnte iCloud-Konto nicht ermitteln.');
-  const principalUrl = new URL(principalHref, principalHost).toString();
-
-  const homeBody =
-    '<?xml version="1.0" encoding="utf-8" ?>' +
-    '<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">' +
-    '<D:prop><C:calendar-home-set/></D:prop></D:propfind>';
-  const { text: homeXml, finalUrl: homeHost } = await propfind(principalUrl, homeBody, auth, 0);
-  const homeHref = extractHref(homeXml);
-  if (!homeHref) throw new Error('Konnte iCloud-Kalender-Ordner nicht ermitteln.');
-  const homeUrl = new URL(homeHref, homeHost).toString();
-
-  const listBody =
-    '<?xml version="1.0" encoding="utf-8" ?>' +
-    '<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">' +
-    '<D:prop><D:resourcetype/><D:displayname/></D:prop></D:propfind>';
-  const { text: listXml, finalUrl: listHost } = await propfind(homeUrl, listBody, auth, 1);
-
-  const responseBlocks = listXml.split(/<[^<>]*:?response>/i).filter((b) => /calendar/i.test(b) && /resourcetype/i.test(b));
-  for (const block of responseBlocks) {
-    if (/<[^<>]*:?collection\s*\/>/i.test(block) && /<[^<>]*:?calendar\s*\/>/i.test(block)) {
-      const href = extractHref(block);
-      if (href && new URL(href, listHost).toString() !== homeUrl) {
-        return new URL(href, listHost).toString();
-      }
-    }
-  }
-  throw new Error('Keinen beschreibbaren iCloud-Kalender gefunden.');
-}
+const { createDAVClient } = require('tsdav');
 
 async function addEventViaCalDav({ title, datetime }, auth) {
-  const calendarUrl = await discoverCalendarUrl(auth);
-  const { uid, ics } = buildIcs({ title, datetime });
-  const eventUrl = new URL(`${uid}.ics`, calendarUrl).toString();
+  const client = await createDAVClient({
+    serverUrl: 'https://caldav.icloud.com',
+    credentials: { username: auth.email, password: auth.password },
+    authMethod: 'Basic',
+    defaultAccountType: 'caldav',
+  });
 
-  const authHeader = 'Basic ' + Buffer.from(`${auth.email}:${auth.password}`).toString('base64');
-  const res = await fetch(eventUrl, {
-    method: 'PUT',
-    headers: {
-      Authorization: authHeader,
-      'Content-Type': 'text/calendar; charset=utf-8',
-    },
-    body: ics,
+  const calendars = await client.fetchCalendars();
+  const writable = calendars.find((c) => !c.readOnly) || calendars[0];
+  if (!writable) throw new Error('Keinen iCloud-Kalender gefunden.');
+
+  const { uid, ics } = buildIcs({ title, datetime });
+  const res = await client.createCalendarObject({
+    calendar: writable,
+    filename: `${uid}.ics`,
+    iCalString: ics,
   });
   if (!res.ok) {
-    throw new Error(`Termin konnte nicht bei iCloud gespeichert werden (${res.status}).`);
+    const text = await res.text().catch(() => '');
+    throw new Error(`Termin konnte nicht bei iCloud gespeichert werden (${res.status}). ${text}`.trim());
   }
 }
 
@@ -227,6 +150,14 @@ async function addEventViaIcsFile(payload) {
 // --- Einstiegspunkt ------------------------------------------------------
 
 async function addCalendarEvent(config, payload) {
+  if (config.icloudEmail && config.icloudAppPassword) {
+    try {
+      await addEventViaCalDav(payload, { email: config.icloudEmail, password: config.icloudAppPassword });
+      return;
+    } catch (err) {
+      console.error('iCloud CalDAV fehlgeschlagen, weiche auf naechste Option aus:', err);
+    }
+  }
   if (process.platform === 'win32') {
     try {
       await addEventOutlook(payload);
@@ -238,14 +169,6 @@ async function addCalendarEvent(config, payload) {
   if (process.platform === 'darwin') {
     await addEventMac(payload);
     return;
-  }
-  if (config.icloudEmail && config.icloudAppPassword) {
-    try {
-      await addEventViaCalDav(payload, { email: config.icloudEmail, password: config.icloudAppPassword });
-      return;
-    } catch (err) {
-      console.error('iCloud CalDAV fehlgeschlagen, weiche auf .ics-Datei aus:', err);
-    }
   }
   await addEventViaIcsFile(payload);
 }
