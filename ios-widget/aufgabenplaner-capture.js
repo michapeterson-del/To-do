@@ -112,7 +112,7 @@ async function analyzeScreenshot(base64Png, existingTasks) {
   };
   req.body = JSON.stringify({
     model: CLAUDE_MODEL,
-    max_tokens: 600,
+    max_tokens: 1024,
     messages: [
       {
         role: "user",

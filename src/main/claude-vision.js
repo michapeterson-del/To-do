@@ -134,7 +134,7 @@ async function analyzeScreenshot(config, pngBase64, existingTasks = []) {
     },
     body: JSON.stringify({
       model: config.claudeModel || 'claude-sonnet-5',
-      max_tokens: 600,
+      max_tokens: 1024,
       messages: [
         {
           role: 'user',
