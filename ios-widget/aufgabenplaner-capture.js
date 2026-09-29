@@ -125,7 +125,12 @@ weiteren Text, ohne Markdown-Codeblock:
 }
 
 function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  // Scriptable kennt kein globales setTimeout - warten per Busy-Wait
+  // (nur kurze Wartezeiten von 1.5-3s, unkritisch).
+  const start = Date.now();
+  while (Date.now() - start < ms) {
+    /* warten */
+  }
 }
 
 // Anthropic antwortet bei kurzzeitiger Ueberlastung des eigenen Backends
