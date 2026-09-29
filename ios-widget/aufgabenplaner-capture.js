@@ -53,7 +53,18 @@ function supabaseRequest(method, pathAndQuery, body) {
 
 async function fetchOpenTasks() {
   const req = supabaseRequest("GET", "tasks?select=id,title,description,category,steps&status=eq.open");
-  return await req.loadJSON();
+  const raw = await req.loadString();
+  const status = req.response ? req.response.statusCode : "?";
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    throw new Error(`Supabase-Antwort (Status ${status}) ist kein JSON: ${raw.slice(0, 300)}`);
+  }
+  if (!Array.isArray(data)) {
+    throw new Error(`Supabase-Fehler (Status ${status}): ${data.message || JSON.stringify(data).slice(0, 300)}`);
+  }
+  return data;
 }
 
 function buildPrompt(existingTasks) {
@@ -202,7 +213,13 @@ async function main() {
     // Loeschen fehlgeschlagen ist nicht kritisch, einfach ignorieren.
   }
 
-  const existingTasks = await fetchOpenTasks();
+  let existingTasks;
+  try {
+    existingTasks = await fetchOpenTasks();
+  } catch (e) {
+    await showAlert("Fehler beim Laden der Aufgaben", String(e));
+    return;
+  }
 
   let parsed;
   try {
