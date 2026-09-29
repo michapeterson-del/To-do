@@ -137,6 +137,7 @@ const RETRY_DELAYS_MS = [1500, 3000];
 
 async function requestOnce(base64Png, existingTasks) {
   const req = new Request("https://api.anthropic.com/v1/messages");
+  req.timeoutInterval = 90;
   req.method = "POST";
   req.headers = {
     "x-api-key": ANTHROPIC_API_KEY,
@@ -164,7 +165,15 @@ async function requestOnce(base64Png, existingTasks) {
 async function analyzeScreenshot(base64Png, existingTasks) {
   let raw, status;
   for (let attempt = 0; ; attempt++) {
-    ({ raw, status } = await requestOnce(base64Png, existingTasks));
+    try {
+      ({ raw, status } = await requestOnce(base64Png, existingTasks));
+    } catch (networkError) {
+      // Netzwerkfehler/Zeitueberschreitung - genau wie bei 503/529 kurz
+      // erneut versuchen, bevor aufgegeben wird.
+      if (attempt >= RETRY_DELAYS_MS.length) throw networkError;
+      await delay(RETRY_DELAYS_MS[attempt]);
+      continue;
+    }
     if (!RETRY_STATUS_CODES.includes(status) || attempt >= RETRY_DELAYS_MS.length) break;
     await delay(RETRY_DELAYS_MS[attempt]);
   }
