@@ -4,23 +4,30 @@
 // nur noch den Screenshot (das darf nur Shortcuts selbst, keine App wie
 // Scriptable), den Rest (Claude-Analyse, Speichern) macht dieses Script.
 //
+// Das Script nimmt IMMER das neueste Bild aus der Fotos-App - die direkte
+// Bild-Uebergabe von Kurzbefehle an Scriptable (per "Eingabe") ist auf
+// manchen Geraeten unzuverlaessig und liefert dann ein leeres/altes Bild.
+// Deshalb muss der Kurzbefehl den Screenshot explizit in die Fotos-App
+// sichern (siehe Schritt 4b unten) - dann ist er garantiert der neueste.
+//
 // Einrichtung:
 // 1. "Scriptable" App aus dem App Store laden (kostenlos) - falls du sie
 //    fuer das Home-Widget schon hast, ist das dieselbe App.
 // 2. Neues Script anlegen, diesen ganzen Text reinkopieren.
 // 3. Unten bei SUPABASE_URL, SUPABASE_ANON_KEY und ANTHROPIC_API_KEY
 //    deine eigenen Werte eintragen.
-// 4. In der Kurzbefehle-App: neuer Kurzbefehl mit GENAU 2 Aktionen:
+// 4. In der Kurzbefehle-App: neuer Kurzbefehl mit GENAU 3 Aktionen:
 //    a) "Bildschirmfoto aufnehmen"
-//    b) "Scriptable ausfuehren" -> dieses Script auswaehlen -> als
+//    b) "Bild im Fotoalbum sichern" (bzw. "Save to Photo Album") -> als
 //       Eingabe das Bildschirmfoto aus Schritt a) waehlen
+//    c) "Scriptable ausfuehren" -> dieses Script auswaehlen
 // 5. Einstellungen -> Action-Taste -> "Kurzbefehl" -> den Kurzbefehl aus
 //    Schritt 4 auswaehlen.
 // 6. Testen: in einer App (z.B. WhatsApp) Action-Taste druecken.
 //
-// Zum Testen direkt in Scriptable (Play-Button, ohne Kurzbefehl): faellt
-// zurueck auf den letzten Screenshot aus den Fotos (fragt einmalig nach
-// Fotos-Zugriff).
+// Zum Testen direkt in Scriptable (Play-Button, ohne Kurzbefehl): nimmt
+// ebenfalls das neueste Fotos-App-Bild (fragt einmalig nach Fotos-Zugriff) -
+// dafuer vorher selbst einen Screenshot machen.
 
 const SUPABASE_URL = "https://DEINE-PROJEKT-ID.supabase.co";
 const SUPABASE_ANON_KEY = "DEIN-ANON-KEY";
@@ -176,19 +183,12 @@ async function showAlert(title, message) {
 }
 
 async function main() {
-  let image = Array.isArray(args.images) ? args.images[0] : null;
-  let usedFallback = false;
-  if (!image) {
-    usedFallback = true;
-    const screenshots = await Photos.latestScreenshots(1);
-    if (!screenshots.length) {
-      await showAlert("Kein Screenshot gefunden", "Mach zuerst einen Screenshot.");
-      return;
-    }
-    image = screenshots[0];
+  const screenshots = await Photos.latestScreenshots(1);
+  if (!screenshots.length) {
+    await showAlert("Kein Screenshot gefunden", "Mach zuerst einen Screenshot.");
+    return;
   }
-  const base64Png = Data.fromPNG(image).toBase64String();
-  const fallbackNote = usedFallback ? " ⚠️ Fotos-Fallback genutzt, nicht der frische Screenshot!" : "";
+  const base64Png = Data.fromPNG(screenshots[0]).toBase64String();
 
   const existingTasks = await fetchOpenTasks();
 
@@ -210,7 +210,7 @@ async function main() {
 
   if (action === "duplicate") {
     const matched = existingTasks.find((t) => t.id === matchedTaskId);
-    await showAlert("Gibt's schon", `Nichts Neues zu: ${matched ? matched.title : "?"}${fallbackNote}`);
+    await showAlert("Gibt's schon", `Nichts Neues zu: ${matched ? matched.title : "?"}`);
     return;
   }
 
@@ -218,7 +218,7 @@ async function main() {
     const matched = existingTasks.find((t) => t.id === matchedTaskId);
     const updateNote = String(parsed.update_note || "").trim();
     if (!updateNote) {
-      await showAlert("Gibt's schon", `Nichts Neues zu: ${matched ? matched.title : "?"}${fallbackNote}`);
+      await showAlert("Gibt's schon", `Nichts Neues zu: ${matched ? matched.title : "?"}`);
       return;
     }
     const existingSteps = Array.isArray(matched.steps) ? matched.steps : [];
@@ -227,14 +227,14 @@ async function main() {
       steps: [...existingSteps, newStep],
     });
     await req.loadJSON();
-    await showAlert("Aktualisiert", `${matched.title}\n+ ${updateNote}${fallbackNote}`);
+    await showAlert("Aktualisiert", `${matched.title}\n+ ${updateNote}`);
     return;
   }
 
   // action === "create"
   const title = String(parsed.title || "").slice(0, 200).trim();
   if (!title) {
-    await showAlert("Nichts erkannt", "Auf dem Screenshot wurde keine Aufgabe gefunden." + fallbackNote);
+    await showAlert("Nichts erkannt", "Auf dem Screenshot wurde keine Aufgabe gefunden.");
     return;
   }
   const description = String(parsed.description || "").slice(0, 1000).trim() || title;
@@ -256,7 +256,7 @@ async function main() {
   const req = supabaseRequest("POST", "tasks", payload);
   await req.loadJSON();
 
-  await showAlert("Aufgabe gespeichert", title + fallbackNote);
+  await showAlert("Aufgabe gespeichert", title);
 }
 
 await main();
