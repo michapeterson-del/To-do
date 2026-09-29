@@ -9,6 +9,9 @@
 // manchen Geraeten unzuverlaessig und liefert dann ein leeres/altes Bild.
 // Deshalb muss der Kurzbefehl den Screenshot explizit in die Fotos-App
 // sichern (siehe Schritt 4b unten) - dann ist er garantiert der neueste.
+// Das Script loescht den Screenshot danach selbst wieder aus Fotos, damit
+// sich dort nichts ansammelt - dafuer braucht der Kurzbefehl keinen
+// eigenen Loesch-Schritt.
 //
 // Einrichtung:
 // 1. "Scriptable" App aus dem App Store laden (kostenlos) - falls du sie
@@ -20,7 +23,8 @@
 //    a) "Bildschirmfoto aufnehmen"
 //    b) "Bild im Fotoalbum sichern" (bzw. "Save to Photo Album") -> als
 //       Eingabe das Bildschirmfoto aus Schritt a) waehlen
-//    c) "Scriptable ausfuehren" -> dieses Script auswaehlen
+//    c) "Scriptable ausfuehren" -> dieses Script auswaehlen (kein
+//       Loesch-Schritt noetig, macht das Script selbst)
 // 5. Einstellungen -> Action-Taste -> "Kurzbefehl" -> den Kurzbefehl aus
 //    Schritt 4 auswaehlen.
 // 6. Testen: in einer App (z.B. WhatsApp) Action-Taste druecken.
@@ -189,6 +193,14 @@ async function main() {
     return;
   }
   const base64Png = Data.fromPNG(screenshots[0]).toBase64String();
+
+  // Aufraeumen: das Bild wurde nur zwischengespeichert, damit es sicher
+  // uebergeben werden kann - in Fotos braucht es danach keiner mehr.
+  try {
+    await Photos.removeLatestScreenshots(1);
+  } catch (e) {
+    // Loeschen fehlgeschlagen ist nicht kritisch, einfach ignorieren.
+  }
 
   const existingTasks = await fetchOpenTasks();
 
