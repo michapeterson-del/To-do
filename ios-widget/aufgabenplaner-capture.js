@@ -198,17 +198,22 @@ async function showAlert(title, message) {
 }
 
 async function main() {
-  const screenshots = await Photos.latestScreenshots(1);
-  if (!screenshots.length) {
+  // Absichtlich "latestPhotos" statt "latestScreenshots": ein per
+  // Kurzbefehl ("Bild im Fotoalbum sichern") neu gespeichertes Bild traegt
+  // nicht zuverlaessig das spezielle iOS-Merkmal "ist ein Systemscreenshot" -
+  // "latestScreenshots" wuerde es dann ignorieren und stattdessen ein altes,
+  // echtes Screenshot finden (und das auch faelschlich loeschen).
+  const photos = await Photos.latestPhotos(1);
+  if (!photos.length) {
     await showAlert("Kein Screenshot gefunden", "Mach zuerst einen Screenshot.");
     return;
   }
-  const base64Png = Data.fromPNG(screenshots[0]).toBase64String();
+  const base64Png = Data.fromPNG(photos[0]).toBase64String();
 
   // Aufraeumen: das Bild wurde nur zwischengespeichert, damit es sicher
   // uebergeben werden kann - in Fotos braucht es danach keiner mehr.
   try {
-    await Photos.removeLatestScreenshots(1);
+    await Photos.removeLatestPhotos(1);
   } catch (e) {
     // Loeschen fehlgeschlagen ist nicht kritisch, einfach ignorieren.
   }
