@@ -123,11 +123,25 @@ async function analyzeScreenshot(base64Png, existingTasks) {
       },
     ],
   });
-  const data = await req.loadJSON();
+  const raw = await req.loadString();
+  const status = req.response ? req.response.statusCode : "?";
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    throw new Error(`Claude-API Antwort (Status ${status}) ist kein JSON: ${raw.slice(0, 300)}`);
+  }
+  if (data.error) {
+    throw new Error(`Claude-API Fehler (Status ${status}): ${data.error.message || JSON.stringify(data.error)}`);
+  }
   const textBlock = (data.content || []).find((c) => c.type === "text");
-  if (!textBlock) throw new Error("Keine Textantwort von Claude erhalten.");
+  if (!textBlock) throw new Error(`Keine Textantwort von Claude erhalten. Rohantwort: ${raw.slice(0, 300)}`);
   const cleaned = textBlock.text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    throw new Error(`Claudes Text ist kein gueltiges JSON: ${cleaned.slice(0, 300)}`);
+  }
 }
 
 async function showAlert(title, message) {
