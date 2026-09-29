@@ -124,8 +124,18 @@ function parseTaskJson(raw, existingTasks) {
   };
 }
 
-async function analyzeScreenshot(config, pngBase64, existingTasks = []) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Anthropic antwortet bei kurzzeitiger Ueberlastung des eigenen Backends
+// manchmal mit Status 503 oder 529 - hat nichts mit dem eigenen API-Key zu
+// tun, ein kurzer Retry loest es meistens von selbst.
+const RETRY_STATUS_CODES = [503, 529];
+const RETRY_DELAYS_MS = [1500, 3000];
+
+async function requestOnce(config, pngBase64, existingTasks) {
+  return fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'x-api-key': config.anthropicApiKey,
@@ -146,6 +156,15 @@ async function analyzeScreenshot(config, pngBase64, existingTasks = []) {
       ],
     }),
   });
+}
+
+async function analyzeScreenshot(config, pngBase64, existingTasks = []) {
+  let res;
+  for (let attempt = 0; ; attempt++) {
+    res = await requestOnce(config, pngBase64, existingTasks);
+    if (res.ok || !RETRY_STATUS_CODES.includes(res.status) || attempt >= RETRY_DELAYS_MS.length) break;
+    await delay(RETRY_DELAYS_MS[attempt]);
+  }
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');

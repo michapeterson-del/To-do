@@ -102,7 +102,18 @@ weiteren Text, ohne Markdown-Codeblock:
 {"action": "create, update oder duplicate", "matched_task_id": "id der passenden Aufgabe oder null", "title": "kurzer Aufgabentitel (bei create)", "description": "1-2 Saetze Kontext (bei create)", "category": "today, process oder private (bei create)", "update_note": "neuer Schritt (nur bei update)", "event_datetime": "JJJJ-MM-TTTHH:MM:00 oder leerer String (bei create)", "event_title": "kurzer Terminname oder leerer String (bei create)"}`;
 }
 
-async function analyzeScreenshot(base64Png, existingTasks) {
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Anthropic antwortet bei kurzzeitiger Ueberlastung des eigenen Backends
+// manchmal mit Status 503 oder 529 (teils sogar als Klartext statt JSON,
+// z.B. "credential validation failed"). Das hat nichts mit dem eigenen
+// API-Key zu tun - ein kurzer Retry loest es meistens von selbst.
+const RETRY_STATUS_CODES = [503, 529];
+const RETRY_DELAYS_MS = [1500, 3000];
+
+async function requestOnce(base64Png, existingTasks) {
   const req = new Request("https://api.anthropic.com/v1/messages");
   req.method = "POST";
   req.headers = {
@@ -125,6 +136,17 @@ async function analyzeScreenshot(base64Png, existingTasks) {
   });
   const raw = await req.loadString();
   const status = req.response ? req.response.statusCode : "?";
+  return { raw, status };
+}
+
+async function analyzeScreenshot(base64Png, existingTasks) {
+  let raw, status;
+  for (let attempt = 0; ; attempt++) {
+    ({ raw, status } = await requestOnce(base64Png, existingTasks));
+    if (!RETRY_STATUS_CODES.includes(status) || attempt >= RETRY_DELAYS_MS.length) break;
+    await delay(RETRY_DELAYS_MS[attempt]);
+  }
+
   let data;
   try {
     data = JSON.parse(raw);
