@@ -136,6 +136,10 @@ function createWidget(tasks, errorMessage) {
     ? createLockScreenWidget(tasks, errorMessage)
     : createHomeScreenWidget(tasks, errorMessage);
   w.url = APP_URL;
+  // Bitte an iOS, moeglichst in 15 Minuten neu abzufragen - eine
+  // Garantie ist das nicht, iOS entscheidet am Ende selbst ueber das
+  // tatsaechliche Update-Budget (Akku, Nutzungsverhalten etc.).
+  w.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
   return w;
 }
 
