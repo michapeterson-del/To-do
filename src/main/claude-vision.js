@@ -42,6 +42,15 @@ entscheide bei der Kategorie:
   verbessert werden soll
 - "private": eine persoenliche/private Angelegenheit ohne Arbeitsbezug
 
+WICHTIG fuer die Kategorie-Entscheidung: Waehle NUR dann "today" oder
+"process", wenn der Screenshot einen klaren Arbeitsbezug zeigt - z.B. ein
+Microsoft-Teams-Chat/Meeting, ein konkret genannter Hersteller/Lieferant/
+Produktname, oder ein Gespraech das erkennbar mit Vertrieb, Tepto oder
+Produktmanagement zu tun hat. Ist NICHTS davon erkennbar (z.B. ein
+normaler WhatsApp-Chat oder sonstiges ohne erkennbaren Firmenbezug),
+waehle IMMER "private" - auch wenn der Inhalt irgendwie nach einer
+Aufgabe aussieht.
+
 Bei "create" ist "description" PFLICHT und darf NIE leer bleiben, auch wenn
 der Titel schon viel sagt: fasse dort konkret zusammen, was auf dem
 Screenshot zu sehen ist (wer ist beteiligt, worum geht es genau, welche

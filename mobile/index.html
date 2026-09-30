@@ -167,6 +167,17 @@
         padding: 1px 7px;
         margin-top: 5px;
       }
+      .category-select {
+        display: inline-block;
+        font-size: 10px;
+        color: var(--text-muted);
+        background: var(--bg);
+        border: none;
+        border-radius: 999px;
+        padding: 2px 7px;
+        margin-top: 5px;
+        margin-right: 4px;
+      }
       .step-list { margin-top: 6px; }
       .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
       .step { display: flex; align-items: flex-start; gap: 6px; padding: 4px 6px; border-radius: 8px; border-left: 2px solid transparent; font-size: 13px; }
@@ -758,13 +769,17 @@
           body.appendChild(renderEventDetails(task));
         }
 
-        if (task.status === 'done') {
-          const categoryBadge = document.createElement('span');
-          categoryBadge.className = 'badge';
-          categoryBadge.textContent =
-            task.category === 'process' ? '🔁 Prozess' : task.category === 'private' ? '🔒 Privat' : '☀️ Heute';
-          body.appendChild(categoryBadge);
-        }
+        const categorySelect = document.createElement('select');
+        categorySelect.className = 'category-select';
+        categorySelect.innerHTML =
+          '<option value="today">☀️ Heute</option>' +
+          '<option value="process">🔁 Prozess</option>' +
+          '<option value="private">🔒 Privat</option>';
+        categorySelect.value = task.category;
+        categorySelect.addEventListener('change', () => {
+          updateTask(task.id, { category: categorySelect.value });
+        });
+        body.appendChild(categorySelect);
         if (task.source === 'screenshot') {
           const badge = document.createElement('span');
           badge.className = 'badge';
@@ -988,6 +1003,15 @@ Bei "create" entscheide bei der Kategorie:
 - "process": eine uebergeordnete Aufgabe / ein Prozess, der optimiert oder
   verbessert werden soll
 - "private": eine persoenliche/private Angelegenheit ohne Arbeitsbezug
+
+WICHTIG fuer die Kategorie-Entscheidung: Waehle NUR dann "today" oder
+"process", wenn der Screenshot einen klaren Arbeitsbezug zeigt - z.B. ein
+Microsoft-Teams-Chat/Meeting, ein konkret genannter Hersteller/Lieferant/
+Produktname, oder ein Gespraech das erkennbar mit Vertrieb, Tepto oder
+Produktmanagement zu tun hat. Ist NICHTS davon erkennbar (z.B. ein
+normaler WhatsApp-Chat oder sonstiges ohne erkennbaren Firmenbezug),
+waehle IMMER "private" - auch wenn der Inhalt irgendwie nach einer
+Aufgabe aussieht.
 
 Bei "create" ist "description" PFLICHT und darf NIE leer bleiben, auch wenn
 der Titel schon viel sagt: fasse dort konkret zusammen, was auf dem Foto zu
