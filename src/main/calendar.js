@@ -36,10 +36,19 @@ function buildIcs({ title, datetime }) {
 }
 
 // --- iCloud CalDAV (per tsdav-Bibliothek) -------------------------------
-
-const { createDAVClient } = require('tsdav');
+//
+// Bewusst erst hier (nicht ganz oben in der Datei) geladen: fehlt das
+// 'tsdav'-Paket (z.B. weil nach dem Download nie "npm install" gelaufen
+// ist), soll nur dieses eine Feature nicht funktionieren - nicht die
+// ganze App beim Start abstuerzen.
 
 async function addEventViaCalDav({ title, datetime }, auth) {
+  let createDAVClient;
+  try {
+    ({ createDAVClient } = require('tsdav'));
+  } catch (e) {
+    throw new Error('Paket "tsdav" fehlt - bitte "npm install" im App-Ordner ausfuehren.');
+  }
   const client = await createDAVClient({
     serverUrl: 'https://caldav.icloud.com',
     credentials: { username: auth.email, password: auth.password },
