@@ -590,6 +590,11 @@
         return new Date(a.created_at) - new Date(b.created_at);
       }
 
+      function byPriorityDesc(a, b) {
+        const diff = (b.priority || 2) - (a.priority || 2);
+        return diff !== 0 ? diff : new Date(a.created_at) - new Date(b.created_at);
+      }
+
       function byUpdatedAtDesc(a, b) {
         return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
       }
@@ -780,6 +785,18 @@
           updateTask(task.id, { category: categorySelect.value });
         });
         body.appendChild(categorySelect);
+
+        const prioritySelect = document.createElement('select');
+        prioritySelect.className = 'category-select';
+        prioritySelect.innerHTML =
+          '<option value="3">🔥 Hoch</option>' +
+          '<option value="2">➡️ Normal</option>' +
+          '<option value="1">🔽 Niedrig</option>';
+        prioritySelect.value = String(task.priority || 2);
+        prioritySelect.addEventListener('change', () => {
+          updateTask(task.id, { priority: Number(prioritySelect.value) });
+        });
+        body.appendChild(prioritySelect);
         if (task.source === 'screenshot') {
           const badge = document.createElement('span');
           badge.className = 'badge';
@@ -805,9 +822,9 @@
       }
 
       function renderAll() {
-        renderColumn(listToday, countToday, (t) => t.category === 'today' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
-        renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
-        renderColumn(listPrivate, countPrivate, (t) => t.category === 'private' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
+        renderColumn(listToday, countToday, (t) => t.category === 'today' && t.status !== 'done' && matchesSearch(t), byPriorityDesc);
+        renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done' && matchesSearch(t), byPriorityDesc);
+        renderColumn(listPrivate, countPrivate, (t) => t.category === 'private' && t.status !== 'done' && matchesSearch(t), byPriorityDesc);
         renderColumn(listDone, countDone, (t) => t.status === 'done' && matchesSearch(t), byUpdatedAtDesc);
       }
 
@@ -829,6 +846,7 @@
           title,
           description: '',
           category,
+          priority: 2,
           status: 'open',
           source: 'manual',
           steps: [],
