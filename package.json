@@ -11,8 +11,5 @@
   "devDependencies": {
     "electron": "^33.2.0",
     "electron-packager": "^17.1.2"
-  },
-  "dependencies": {
-    "tsdav": "^2.3.4"
   }
 }

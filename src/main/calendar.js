@@ -1,13 +1,10 @@
 // Legt einen erkannten Termin direkt im Kalender an.
 //
 // Reihenfolge:
-// 1. iCloud CalDAV (ueber die tsdav-Bibliothek), falls Apple-ID +
-//    App-spezifisches Passwort hinterlegt sind - traegt den Termin direkt
-//    bei Apple ein, erscheint automatisch auf allen Geraeten inkl. iPhone.
-// 2. Windows: per PowerShell/COM direkt in die laufende Outlook-Installation
+// 1. Windows: per PowerShell/COM direkt in die laufende Outlook-Installation
 //    (kein Dialog, kein Import-Klick).
-// 3. Mac: per AppleScript direkt in Kalender.app (kein Import-Dialog).
-// 4. Sonst/Fallback: .ics-Datei, die mit dem Standard-Kalenderprogramm
+// 2. Mac: per AppleScript direkt in Kalender.app (kein Import-Dialog).
+// 3. Sonst/Fallback: .ics-Datei, die mit dem Standard-Kalenderprogramm
 //    geoeffnet wird (ein Bestaetigungsklick noetig).
 
 const fs = require('fs');
@@ -33,43 +30,6 @@ function buildIcs({ title, datetime }) {
     '',
   ].join('\r\n');
   return { uid, ics };
-}
-
-// --- iCloud CalDAV (per tsdav-Bibliothek) -------------------------------
-//
-// Bewusst erst hier (nicht ganz oben in der Datei) geladen: fehlt das
-// 'tsdav'-Paket (z.B. weil nach dem Download nie "npm install" gelaufen
-// ist), soll nur dieses eine Feature nicht funktionieren - nicht die
-// ganze App beim Start abstuerzen.
-
-async function addEventViaCalDav({ title, datetime }, auth) {
-  let createDAVClient;
-  try {
-    ({ createDAVClient } = require('tsdav'));
-  } catch (e) {
-    throw new Error('Paket "tsdav" fehlt - bitte "npm install" im App-Ordner ausfuehren.');
-  }
-  const client = await createDAVClient({
-    serverUrl: 'https://caldav.icloud.com',
-    credentials: { username: auth.email, password: auth.password },
-    authMethod: 'Basic',
-    defaultAccountType: 'caldav',
-  });
-
-  const calendars = await client.fetchCalendars();
-  const writable = calendars.find((c) => !c.readOnly) || calendars[0];
-  if (!writable) throw new Error('Keinen iCloud-Kalender gefunden.');
-
-  const { uid, ics } = buildIcs({ title, datetime });
-  const res = await client.createCalendarObject({
-    calendar: writable,
-    filename: `${uid}.ics`,
-    iCalString: ics,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Termin konnte nicht bei iCloud gespeichert werden (${res.status}). ${text}`.trim());
-  }
 }
 
 // --- macOS: AppleScript -----------------------------------------------
@@ -159,14 +119,6 @@ async function addEventViaIcsFile(payload) {
 // --- Einstiegspunkt ------------------------------------------------------
 
 async function addCalendarEvent(config, payload) {
-  if (config.icloudEmail && config.icloudAppPassword) {
-    try {
-      await addEventViaCalDav(payload, { email: config.icloudEmail, password: config.icloudAppPassword });
-      return;
-    } catch (err) {
-      console.error('iCloud CalDAV fehlgeschlagen, weiche auf naechste Option aus:', err);
-    }
-  }
   if (process.platform === 'win32') {
     try {
       await addEventOutlook(payload);

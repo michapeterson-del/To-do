@@ -6,8 +6,6 @@ const fields = {
   supabaseAnonKey: document.getElementById('supabaseAnonKey'),
   anthropicApiKey: document.getElementById('anthropicApiKey'),
   claudeModel: document.getElementById('claudeModel'),
-  icloudEmail: document.getElementById('icloudEmail'),
-  icloudAppPassword: document.getElementById('icloudAppPassword'),
   hotkey: document.getElementById('hotkey'),
 };
 

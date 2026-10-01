@@ -10,13 +10,11 @@ const DEFAULTS = {
   anthropicApiKey: '',
   claudeModel: 'claude-sonnet-5',
   hotkey: 'CommandOrControl+Shift+T',
-  icloudEmail: '',
-  icloudAppPassword: '',
 };
 
 // Diese Felder werden über den Schlüsselbund des Betriebssystems verschlüsselt
 // gespeichert (macOS Keychain / Windows DPAPI), nicht im Klartext.
-const SECRET_FIELDS = ['supabaseAnonKey', 'anthropicApiKey', 'icloudAppPassword'];
+const SECRET_FIELDS = ['supabaseAnonKey', 'anthropicApiKey'];
 const ENC_PREFIX = 'enc:';
 
 function canEncrypt() {
