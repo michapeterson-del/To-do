@@ -41,6 +41,11 @@ function byCreatedAtAsc(a, b) {
   return new Date(a.created_at) - new Date(b.created_at);
 }
 
+function byPriorityDesc(a, b) {
+  const diff = (b.priority || 2) - (a.priority || 2);
+  return diff !== 0 ? diff : new Date(a.created_at) - new Date(b.created_at);
+}
+
 function byUpdatedAtDesc(a, b) {
   return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
 }
@@ -132,6 +137,24 @@ function renderTaskItem(task) {
     updateTask(task.id, { category: moveSelect.value });
   });
 
+  const prioritySelect = document.createElement('select');
+  prioritySelect.className = 'task-move';
+  prioritySelect.title = 'Prioritaet aendern';
+  [
+    { value: '3', label: '🔥 Hoch' },
+    { value: '2', label: '➡️ Normal' },
+    { value: '1', label: '🔽 Niedrig' },
+  ].forEach(({ value, label }) => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = label;
+    prioritySelect.appendChild(option);
+  });
+  prioritySelect.value = String(task.priority || 2);
+  prioritySelect.addEventListener('change', () => {
+    updateTask(task.id, { priority: Number(prioritySelect.value) });
+  });
+
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'task-delete';
   deleteBtn.textContent = '✕';
@@ -141,6 +164,7 @@ function renderTaskItem(task) {
   li.appendChild(checkbox);
   li.appendChild(body);
   li.appendChild(moveSelect);
+  li.appendChild(prioritySelect);
   li.appendChild(deleteBtn);
   return li;
 }
@@ -307,9 +331,9 @@ function matchesSearch(task) {
 }
 
 function renderAll() {
-  renderColumn(listToday, countToday, (t) => t.category === 'today' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
-  renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
-  renderColumn(listPrivate, countPrivate, (t) => t.category === 'private' && t.status !== 'done' && matchesSearch(t), byCreatedAtAsc);
+  renderColumn(listToday, countToday, (t) => t.category === 'today' && t.status !== 'done' && matchesSearch(t), byPriorityDesc);
+  renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done' && matchesSearch(t), byPriorityDesc);
+  renderColumn(listPrivate, countPrivate, (t) => t.category === 'private' && t.status !== 'done' && matchesSearch(t), byPriorityDesc);
   renderColumn(listDone, countDone, (t) => t.status === 'done' && matchesSearch(t), byUpdatedAtDesc);
 }
 
@@ -335,6 +359,7 @@ async function addTask(category, title) {
     title,
     description: '',
     category,
+    priority: 2,
     status: 'open',
     source: 'manual',
     steps: [],

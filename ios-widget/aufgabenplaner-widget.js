@@ -32,8 +32,11 @@ const CATEGORY_INFO = {
 const category = CATEGORY_INFO[args.widgetParameter] ? args.widgetParameter : "today";
 const info = CATEGORY_INFO[category];
 
+const PRIORITY_ICON = { 3: "🔥", 2: "➡️", 1: "🔽" };
+
 async function fetchTasks() {
-  const url = `${SUPABASE_URL}/rest/v1/tasks?select=title,status,created_at&status=eq.open&category=eq.${category}&order=created_at.asc`;
+  // Hoechste Prioritaet zuerst, bei gleicher Prioritaet die aeltesten zuerst.
+  const url = `${SUPABASE_URL}/rest/v1/tasks?select=title,status,priority,created_at&status=eq.open&category=eq.${category}&order=priority.desc,created_at.asc`;
   const req = new Request(url);
   req.headers = {
     apikey: SUPABASE_ANON_KEY,
@@ -49,7 +52,8 @@ function createLockScreenWidget(tasks, errorMessage) {
 
   if (config.widgetFamily === "accessoryInline") {
     // Nur eine einzige Textzeile moeglich.
-    w.addText(errorMessage ? "Fehler" : !tasks.length ? "Keine Aufgaben" : `${info.icon} ${tasks[0].title}`);
+    const firstLabel = tasks.length ? `${PRIORITY_ICON[tasks[0].priority] || PRIORITY_ICON[2]} ${tasks[0].title}` : "";
+    w.addText(errorMessage ? "Fehler" : !tasks.length ? "Keine Aufgaben" : firstLabel);
     return w;
   }
 
@@ -76,7 +80,7 @@ function createLockScreenWidget(tasks, errorMessage) {
     return w;
   }
 
-  const first = w.addText(tasks[0].title);
+  const first = w.addText(`${PRIORITY_ICON[tasks[0].priority] || PRIORITY_ICON[2]} ${tasks[0].title}`);
   first.font = Font.systemFont(11);
   first.lineLimit = 1;
 
@@ -115,7 +119,8 @@ function createHomeScreenWidget(tasks, errorMessage) {
   const maxItems = family === "large" ? 8 : family === "medium" ? 4 : 3;
 
   for (const task of tasks.slice(0, maxItems)) {
-    const line = w.addText(`${info.icon} ${task.title}`);
+    const priorityIcon = PRIORITY_ICON[task.priority] || PRIORITY_ICON[2];
+    const line = w.addText(`${priorityIcon} ${task.title}`);
     line.font = Font.systemFont(12);
     line.textColor = Color.white();
     line.lineLimit = 1;
