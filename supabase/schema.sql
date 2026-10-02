@@ -11,6 +11,8 @@ create table if not exists public.tasks (
   -- 1 = niedrig, 2 = normal, 3 = hoch
   priority smallint not null default 2 check (priority in (1, 2, 3)),
   recurrence text not null default 'none' check (recurrence in ('none', 'daily', 'weekly', 'monthly')),
+  -- Nur bei recurrence = 'monthly' relevant: fester Tag des Monats (1-31).
+  recurrence_day smallint check (recurrence_day is null or (recurrence_day between 1 and 31)),
   source text not null default 'manual' check (source in ('manual', 'screenshot')),
   -- Checkliste fuer Prozess-Aufgaben: [{"id": "...", "text": "...", "done": false}, ...]
   steps jsonb not null default '[]'::jsonb,

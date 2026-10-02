@@ -400,6 +400,12 @@ body {
   max-width: 90px;
 }
 
+.recurrence-day-input {
+  max-width: 44px;
+  text-align: center;
+  cursor: text;
+}
+
 .task-delete {
   border: none;
   background: transparent;

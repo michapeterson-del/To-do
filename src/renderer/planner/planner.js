@@ -2,6 +2,7 @@ const listToday = document.getElementById('listToday');
 const listProcess = document.getElementById('listProcess');
 const listPrivate = document.getElementById('listPrivate');
 const listDone = document.getElementById('listDone');
+const listSeries = document.getElementById('listSeries');
 const countToday = document.getElementById('countToday');
 const countProcess = document.getElementById('countProcess');
 const countPrivate = document.getElementById('countPrivate');
@@ -21,7 +22,7 @@ function escapeHtml(str) {
 function renderColumn(listEl, countEl, filterFn, sortFn) {
   const items = tasks.filter(filterFn).sort(sortFn);
 
-  countEl.textContent = String(items.length);
+  if (countEl) countEl.textContent = String(items.length);
   listEl.innerHTML = '';
 
   if (!items.length) {
@@ -183,7 +184,24 @@ function renderTaskItem(task) {
     recurrenceSelect.appendChild(option);
   });
   recurrenceSelect.value = task.recurrence || 'none';
+
+  const recurrenceDayInput = document.createElement('input');
+  recurrenceDayInput.type = 'number';
+  recurrenceDayInput.className = 'task-move recurrence-day-input';
+  recurrenceDayInput.min = '1';
+  recurrenceDayInput.max = '31';
+  recurrenceDayInput.title = 'Tag des Monats, an dem die Aufgabe wieder auftaucht';
+  recurrenceDayInput.placeholder = 'Tag';
+  recurrenceDayInput.value = task.recurrence_day || '';
+  recurrenceDayInput.hidden = task.recurrence !== 'monthly';
+  recurrenceDayInput.addEventListener('change', () => {
+    const day = Math.min(31, Math.max(1, Number(recurrenceDayInput.value) || 1));
+    recurrenceDayInput.value = day;
+    updateTask(task.id, { recurrence_day: day });
+  });
+
   recurrenceSelect.addEventListener('change', () => {
+    recurrenceDayInput.hidden = recurrenceSelect.value !== 'monthly';
     updateTask(task.id, { recurrence: recurrenceSelect.value });
   });
 
@@ -198,6 +216,7 @@ function renderTaskItem(task) {
   li.appendChild(moveSelect);
   li.appendChild(prioritySelect);
   li.appendChild(recurrenceSelect);
+  li.appendChild(recurrenceDayInput);
   li.appendChild(deleteBtn);
   return li;
 }
@@ -376,7 +395,8 @@ function renderAll() {
   renderColumn(listToday, countToday, (t) => t.category === 'today' && t.status !== 'done' && matchesSearch(t), byPriorityDesc);
   renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done' && matchesSearch(t), byPriorityDesc);
   renderColumn(listPrivate, countPrivate, (t) => t.category === 'private' && t.status !== 'done' && matchesSearch(t), byPriorityDesc);
-  renderColumn(listDone, countDone, (t) => t.status === 'done' && matchesSearch(t), byUpdatedAtDesc);
+  renderColumn(listDone, countDone, (t) => t.status === 'done' && t.recurrence === 'none' && matchesSearch(t), byUpdatedAtDesc);
+  renderColumn(listSeries, null, (t) => t.status === 'done' && t.recurrence !== 'none' && matchesSearch(t), byUpdatedAtDesc);
 }
 
 searchInput.addEventListener('input', () => {
@@ -395,13 +415,30 @@ const RECURRENCE_MS = {
   monthly: 29 * 24 * 60 * 60 * 1000,
 };
 
+// Naechster Monatstermin ab einem gegebenen Datum: derselbe Monat, falls
+// der Tag noch nicht erreicht ist, sonst der Folgemonat.
+function nextMonthlyDueDate(from, day) {
+  let due = new Date(from.getFullYear(), from.getMonth(), day);
+  if (due.getTime() <= from.getTime()) {
+    due = new Date(from.getFullYear(), from.getMonth() + 1, day);
+  }
+  return due;
+}
+
+function isRecurrenceDue(task, now) {
+  if (task.status !== 'done') return false;
+  const lastDone = new Date(task.updated_at || task.created_at);
+  if (task.recurrence === 'monthly' && task.recurrence_day) {
+    const due = nextMonthlyDueDate(lastDone, task.recurrence_day);
+    return now >= due.getTime() - 24 * 60 * 60 * 1000;
+  }
+  if (!RECURRENCE_MS[task.recurrence]) return false;
+  return now - lastDone.getTime() >= RECURRENCE_MS[task.recurrence];
+}
+
 async function reopenDueRecurringTasks(list) {
   const now = Date.now();
-  const due = list.filter((t) => {
-    if (t.status !== 'done' || !RECURRENCE_MS[t.recurrence]) return false;
-    const lastDone = new Date(t.updated_at || t.created_at).getTime();
-    return now - lastDone >= RECURRENCE_MS[t.recurrence];
-  });
+  const due = list.filter((t) => isRecurrenceDue(t, now));
   if (!due.length) return list;
 
   const reopened = await Promise.all(
