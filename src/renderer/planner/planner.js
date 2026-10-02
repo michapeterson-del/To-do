@@ -94,6 +94,19 @@ function renderTaskItem(task) {
   body.appendChild(title);
 
   body.appendChild(renderDescription(task));
+
+  const ageBadge = document.createElement('span');
+  ageBadge.className = 'badge';
+  ageBadge.textContent = formatAge(task.created_at);
+  body.appendChild(ageBadge);
+
+  if (RECURRENCE_LABEL[task.recurrence]) {
+    const recurrenceBadge = document.createElement('span');
+    recurrenceBadge.className = 'badge';
+    recurrenceBadge.textContent = RECURRENCE_LABEL[task.recurrence];
+    body.appendChild(recurrenceBadge);
+  }
+
   body.appendChild(renderStepList(task));
 
   if (task.event_datetime) {
@@ -316,6 +329,15 @@ function formatEventLabel(datetime) {
   return date.toLocaleString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
+function formatAge(createdAt) {
+  const days = Math.floor((Date.now() - new Date(createdAt).getTime()) / (24 * 60 * 60 * 1000));
+  if (days <= 0) return 'heute angelegt';
+  if (days === 1) return 'seit 1 Tag';
+  return `seit ${days} Tagen`;
+}
+
+const RECURRENCE_LABEL = { daily: '🔁 Taeglich', weekly: '📅 Woechentlich', monthly: '🗓️ Monatlich' };
+
 function renderEventDetails(task) {
   const details = document.createElement('details');
   details.className = 'event-details';
@@ -365,10 +387,12 @@ searchInput.addEventListener('input', () => {
 // Keine Server-/Cron-Komponente in dieser App - wiederkehrende Aufgaben
 // werden stattdessen beim Laden client-seitig geprueft und bei Bedarf
 // wieder geoeffnet (Checkliste zurueckgesetzt).
+// Jeweils einen Tag frueher wieder geoeffnet, damit noch Zeit bleibt, die
+// Aufgabe vor dem eigentlichen Turnus zu erledigen.
 const RECURRENCE_MS = {
   daily: 24 * 60 * 60 * 1000,
-  weekly: 7 * 24 * 60 * 60 * 1000,
-  monthly: 30 * 24 * 60 * 60 * 1000,
+  weekly: 6 * 24 * 60 * 60 * 1000,
+  monthly: 29 * 24 * 60 * 60 * 1000,
 };
 
 async function reopenDueRecurringTasks(list) {
