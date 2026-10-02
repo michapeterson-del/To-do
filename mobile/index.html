@@ -119,7 +119,7 @@
         border: 1px solid var(--border);
       }
       .task-item input[type='checkbox'] { margin-top: 3px; width: 18px; height: 18px; flex-shrink: 0; }
-      .task-body { flex: 1 1 180px; min-width: 0; }
+      .task-body { flex: 1; min-width: 0; }
       .task-title { font-size: 15px; outline: none; word-break: break-word; }
       .task-item.done .task-title { text-decoration: line-through; color: var(--done); }
       .event-details {
@@ -187,6 +187,12 @@
       .recurrence-day-input {
         width: 44px;
         text-align: center;
+      }
+      .task-selects-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 4px;
       }
       .step-list { margin-top: 6px; }
       .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -820,6 +826,13 @@
           body.appendChild(renderEventDetails(task));
         }
 
+        // Eigener Block-Container (kein Flex-Geschwister des Titels) fuer
+        // die drei Auswahlfelder, damit sie den Titel nie zusammenquetschen
+        // koennen - sie brechen innerhalb dieses Containers um, nicht der
+        // Titel.
+        const selectsRow = document.createElement('div');
+        selectsRow.className = 'task-selects-row';
+
         const categorySelect = document.createElement('select');
         categorySelect.className = 'category-select';
         categorySelect.innerHTML =
@@ -830,7 +843,7 @@
         categorySelect.addEventListener('change', () => {
           updateTask(task.id, { category: categorySelect.value });
         });
-        body.appendChild(categorySelect);
+        selectsRow.appendChild(categorySelect);
 
         const prioritySelect = document.createElement('select');
         prioritySelect.className = 'category-select';
@@ -842,7 +855,7 @@
         prioritySelect.addEventListener('change', () => {
           updateTask(task.id, { priority: Number(prioritySelect.value) });
         });
-        body.appendChild(prioritySelect);
+        selectsRow.appendChild(prioritySelect);
 
         const recurrenceSelect = document.createElement('select');
         recurrenceSelect.className = 'category-select';
@@ -852,7 +865,7 @@
           '<option value="weekly">📅 Woechentlich</option>' +
           '<option value="monthly">🗓️ Monatlich</option>';
         recurrenceSelect.value = task.recurrence || 'none';
-        body.appendChild(recurrenceSelect);
+        selectsRow.appendChild(recurrenceSelect);
 
         const recurrenceDayInput = document.createElement('input');
         recurrenceDayInput.type = 'number';
@@ -868,12 +881,14 @@
           recurrenceDayInput.value = day;
           updateTask(task.id, { recurrence_day: day });
         });
-        body.appendChild(recurrenceDayInput);
+        selectsRow.appendChild(recurrenceDayInput);
 
         recurrenceSelect.addEventListener('change', () => {
           recurrenceDayInput.hidden = recurrenceSelect.value !== 'monthly';
           updateTask(task.id, { recurrence: recurrenceSelect.value });
         });
+
+        body.appendChild(selectsRow);
         if (task.source === 'screenshot') {
           const badge = document.createElement('span');
           badge.className = 'badge';

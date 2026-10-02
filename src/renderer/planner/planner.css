@@ -406,6 +406,13 @@ body {
   cursor: text;
 }
 
+.task-selects-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
 .task-delete {
   border: none;
   background: transparent;

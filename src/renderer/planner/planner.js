@@ -133,6 +133,12 @@ function renderTaskItem(task) {
     body.appendChild(meta);
   }
 
+  // Eigener Block-Container (kein Flex-Geschwister des Titels) fuer die
+  // Auswahlfelder, damit sie den Titel nie zusammenquetschen koennen - sie
+  // brechen innerhalb dieses Containers um, nicht der Titel.
+  const selectsRow = document.createElement('div');
+  selectsRow.className = 'task-selects-row';
+
   const moveSelect = document.createElement('select');
   moveSelect.className = 'task-move';
   moveSelect.title = 'In andere Kategorie verschieben';
@@ -205,6 +211,12 @@ function renderTaskItem(task) {
     updateTask(task.id, { recurrence: recurrenceSelect.value });
   });
 
+  selectsRow.appendChild(moveSelect);
+  selectsRow.appendChild(prioritySelect);
+  selectsRow.appendChild(recurrenceSelect);
+  selectsRow.appendChild(recurrenceDayInput);
+  body.appendChild(selectsRow);
+
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'task-delete';
   deleteBtn.textContent = '✕';
@@ -213,10 +225,6 @@ function renderTaskItem(task) {
 
   li.appendChild(checkbox);
   li.appendChild(body);
-  li.appendChild(moveSelect);
-  li.appendChild(prioritySelect);
-  li.appendChild(recurrenceSelect);
-  li.appendChild(recurrenceDayInput);
   li.appendChild(deleteBtn);
   return li;
 }
