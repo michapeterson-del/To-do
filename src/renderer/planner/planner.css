@@ -200,6 +200,7 @@ body {
 
 .task-item {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 8px;
   padding: 8px;
@@ -218,7 +219,7 @@ body {
 }
 
 .task-body {
-  flex: 1;
+  flex: 1 1 180px;
   min-width: 0;
 }
 
