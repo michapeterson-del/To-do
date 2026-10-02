@@ -135,7 +135,8 @@ body {
 
 #titleInput,
 #descriptionInput,
-#updateNoteInput {
+#updateNoteInput,
+#recurrenceDayInput {
   width: 100%;
   padding: 8px 10px;
   border-radius: 9px;
@@ -149,7 +150,8 @@ body {
 
 #titleInput:focus,
 #descriptionInput:focus,
-#updateNoteInput:focus {
+#updateNoteInput:focus,
+#recurrenceDayInput:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }

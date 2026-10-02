@@ -64,9 +64,18 @@ Uhrzeit genannt wird (z.B. "Meeting Montag 14 Uhr", "Termin am 3.10. um
 leerer String. "event_title" ist dann ein kurzer Terminname, sonst leerer
 String.
 
+Pruefe ausserdem bei "create", ob der Screenshot auf eine WIEDERKEHRENDE
+Aufgabe hindeutet, z.B. "jeden Montag", "taeglich", "woechentliches
+Meeting", "jeden 1. im Monat", "monatliche Abrechnung". Falls ja:
+"recurrence" = "daily", "weekly" oder "monthly" je nach Turnus, sonst
+"recurrence" = "none". Nur falls "monthly" UND ein konkreter Tag des
+Monats erkennbar ist (z.B. "jeden 15."): "recurrence_day" = diese Zahl
+(1-31) als Zahl, sonst "recurrence_day" = null. Im Zweifel IMMER
+"recurrence" = "none" waehlen statt zu raten.
+
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt in genau diesem Format, ohne
 weiteren Text, ohne Markdown-Codeblock:
-{"action": "create, update oder duplicate", "matched_task_id": "id der passenden Aufgabe oder null", "title": "kurzer Aufgabentitel (bei create)", "description": "1-2 Saetze Kontext (bei create)", "category": "today, process oder private (bei create)", "update_note": "neuer Schritt (nur bei update)", "event_datetime": "JJJJ-MM-TTTHH:MM:00 oder leerer String (bei create)", "event_title": "kurzer Terminname oder leerer String (bei create)"}`;
+{"action": "create, update oder duplicate", "matched_task_id": "id der passenden Aufgabe oder null", "title": "kurzer Aufgabentitel (bei create)", "description": "1-2 Saetze Kontext (bei create)", "category": "today, process oder private (bei create)", "update_note": "neuer Schritt (nur bei update)", "event_datetime": "JJJJ-MM-TTTHH:MM:00 oder leerer String (bei create)", "event_title": "kurzer Terminname oder leerer String (bei create)", "recurrence": "none, daily, weekly oder monthly (bei create)", "recurrence_day": "Zahl 1-31 oder null (nur bei monthly mit erkennbarem Tag)"}`;
 }
 
 function parseTaskJson(raw, existingTasks) {
@@ -102,11 +111,19 @@ function parseTaskJson(raw, existingTasks) {
     const category = ['process', 'private'].includes(parsed.category) ? parsed.category : 'today';
     const eventDatetime = String(parsed.event_datetime || '').trim();
     const eventTitle = String(parsed.event_title || '').slice(0, 200).trim();
+    const recurrence = ['daily', 'weekly', 'monthly'].includes(parsed.recurrence) ? parsed.recurrence : 'none';
+    const recurrenceDayNum = Number(parsed.recurrence_day);
+    const recurrenceDay =
+      recurrence === 'monthly' && Number.isInteger(recurrenceDayNum) && recurrenceDayNum >= 1 && recurrenceDayNum <= 31
+        ? recurrenceDayNum
+        : null;
     return {
       action: 'create',
       title,
       description,
       category,
+      recurrence,
+      recurrence_day: recurrenceDay,
       event_datetime: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(eventDatetime) ? eventDatetime : '',
       event_title: eventTitle || title,
     };

@@ -57,6 +57,7 @@ function registerIpcHandlers({ registerHotkey }) {
         description: draft.description,
         category: draft.category,
         recurrence: draft.recurrence,
+        recurrence_day: draft.recurrence_day,
         source: 'screenshot',
         event_datetime: draft.event_datetime,
         event_title: draft.event_title,

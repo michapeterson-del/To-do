@@ -6,6 +6,7 @@ const titleInput = document.getElementById('titleInput');
 const descriptionInput = document.getElementById('descriptionInput');
 const categoryToggle = document.getElementById('categoryToggle');
 const recurrenceToggle = document.getElementById('recurrenceToggle');
+const recurrenceDayInput = document.getElementById('recurrenceDayInput');
 const duplicateNotice = document.getElementById('duplicateNotice');
 const updateFields = document.getElementById('updateFields');
 const createFields = document.getElementById('createFields');
@@ -22,6 +23,7 @@ const addEventBtn = document.getElementById('addEventBtn');
 
 let currentCategory = 'today';
 let currentRecurrence = 'none';
+let currentRecurrenceDay = null;
 let mode = 'create'; // 'create' | 'update' | 'duplicate'
 let lastDraft = null;
 
@@ -38,12 +40,21 @@ function setCategory(category) {
   });
 }
 
-function setRecurrence(recurrence) {
+function setRecurrence(recurrence, day) {
   currentRecurrence = ['daily', 'weekly', 'monthly'].includes(recurrence) ? recurrence : 'none';
   recurrenceToggle.querySelectorAll('.cat-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.recurrence === currentRecurrence);
   });
+  recurrenceDayInput.hidden = currentRecurrence !== 'monthly';
+  currentRecurrenceDay = Number.isInteger(day) && day >= 1 && day <= 31 ? day : null;
+  recurrenceDayInput.value = currentRecurrenceDay || '';
 }
+
+recurrenceDayInput.addEventListener('change', () => {
+  const day = Math.min(31, Math.max(1, Number(recurrenceDayInput.value) || 1));
+  recurrenceDayInput.value = day;
+  currentRecurrenceDay = day;
+});
 
 function setMode(nextMode) {
   mode = nextMode;
@@ -103,7 +114,7 @@ window.api.capture.onResult((draft) => {
     titleInput.value = draft.title || '';
     descriptionInput.value = draft.description || '';
     setCategory(draft.category);
-    setRecurrence('none');
+    setRecurrence(draft.recurrence, draft.recurrence_day);
   }
   if (draft.event_datetime) {
     eventNotice.hidden = false;
@@ -157,6 +168,7 @@ resultView.addEventListener('submit', async (e) => {
       description: descriptionInput.value.trim(),
       category: currentCategory,
       recurrence: currentRecurrence,
+      recurrence_day: currentRecurrence === 'monthly' ? currentRecurrenceDay : null,
       event_datetime: lastDraft?.event_datetime || '',
       event_title: lastDraft?.event_title || '',
     };

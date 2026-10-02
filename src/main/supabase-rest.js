@@ -42,6 +42,7 @@ async function createTask(config, task) {
     description: task.description || '',
     category: ['process', 'private'].includes(task.category) ? task.category : 'today',
     recurrence: ['daily', 'weekly', 'monthly'].includes(task.recurrence) ? task.recurrence : 'none',
+    recurrence_day: Number.isInteger(task.recurrence_day) && task.recurrence_day >= 1 && task.recurrence_day <= 31 ? task.recurrence_day : null,
     status: 'open',
     source: task.source === 'screenshot' ? 'screenshot' : 'manual',
     steps: Array.isArray(task.steps) ? task.steps : [],
