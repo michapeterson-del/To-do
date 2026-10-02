@@ -342,6 +342,7 @@
     <header>
       <h1>Aufgabenplaner</h1>
       <button id="doneToggleBtn" class="icon-btn" title="Erledigte Aufgaben anzeigen">✅ <span class="count" id="countDone">0</span></button>
+      <button id="seriesToggleBtn" class="icon-btn" title="Serien anzeigen">🔁 <span class="count" id="countSeries">0</span></button>
       <button id="settingsBtn" class="icon-btn" title="Einstellungen">⚙</button>
     </header>
 
@@ -393,9 +394,13 @@
         <button id="doneCloseBtn" class="icon-btn" title="Schliessen">✕</button>
       </div>
       <ul class="task-list" id="listDone"></ul>
+    </aside>
 
-      <div class="section-header" style="margin-top: 18px">
+    <div id="seriesBackdrop" class="done-backdrop"></div>
+    <aside id="seriesDrawer" class="done-drawer">
+      <div class="section-header">
         <h2>Serien</h2>
+        <button id="seriesCloseBtn" class="icon-btn" title="Schliessen">✕</button>
       </div>
       <p class="hint-small">Wiederkehrende Aufgaben, die gerade erledigt sind und von selbst wieder auftauchen.</p>
       <ul class="task-list" id="listSeries"></ul>
@@ -502,6 +507,7 @@
       const countProcess = document.getElementById('countProcess');
       const countPrivate = document.getElementById('countPrivate');
       const countDone = document.getElementById('countDone');
+      const countSeries = document.getElementById('countSeries');
       const hint = document.getElementById('hint');
       const searchInput = document.getElementById('searchInput');
       const settingsDialog = document.getElementById('settingsDialog');
@@ -557,6 +563,19 @@
       });
       document.getElementById('doneCloseBtn').addEventListener('click', closeDoneDrawer);
       doneBackdrop.addEventListener('click', closeDoneDrawer);
+
+      const seriesDrawer = document.getElementById('seriesDrawer');
+      const seriesBackdrop = document.getElementById('seriesBackdrop');
+      function closeSeriesDrawer() {
+        seriesDrawer.classList.remove('open');
+        seriesBackdrop.classList.remove('open');
+      }
+      document.getElementById('seriesToggleBtn').addEventListener('click', () => {
+        seriesDrawer.classList.add('open');
+        seriesBackdrop.classList.add('open');
+      });
+      document.getElementById('seriesCloseBtn').addEventListener('click', closeSeriesDrawer);
+      seriesBackdrop.addEventListener('click', closeSeriesDrawer);
 
       settingsForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -919,7 +938,7 @@
         renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done' && matchesSearch(t), byPriorityDesc);
         renderColumn(listPrivate, countPrivate, (t) => t.category === 'private' && t.status !== 'done' && matchesSearch(t), byPriorityDesc);
         renderColumn(listDone, countDone, (t) => t.status === 'done' && t.recurrence === 'none' && matchesSearch(t), byUpdatedAtDesc);
-        renderColumn(listSeries, null, (t) => t.status === 'done' && t.recurrence !== 'none' && matchesSearch(t), byUpdatedAtDesc);
+        renderColumn(listSeries, countSeries, (t) => t.status === 'done' && t.recurrence !== 'none' && matchesSearch(t), byUpdatedAtDesc);
       }
 
       // Keine Server-/Cron-Komponente in dieser App - wiederkehrende
