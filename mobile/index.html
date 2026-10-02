@@ -797,6 +797,19 @@
           updateTask(task.id, { priority: Number(prioritySelect.value) });
         });
         body.appendChild(prioritySelect);
+
+        const recurrenceSelect = document.createElement('select');
+        recurrenceSelect.className = 'category-select';
+        recurrenceSelect.innerHTML =
+          '<option value="none">🚫 Einmalig</option>' +
+          '<option value="daily">🔁 Taeglich</option>' +
+          '<option value="weekly">📅 Woechentlich</option>' +
+          '<option value="monthly">🗓️ Monatlich</option>';
+        recurrenceSelect.value = task.recurrence || 'none';
+        recurrenceSelect.addEventListener('change', () => {
+          updateTask(task.id, { recurrence: recurrenceSelect.value });
+        });
+        body.appendChild(recurrenceSelect);
         if (task.source === 'screenshot') {
           const badge = document.createElement('span');
           badge.className = 'badge';
@@ -828,11 +841,48 @@
         renderColumn(listDone, countDone, (t) => t.status === 'done' && matchesSearch(t), byUpdatedAtDesc);
       }
 
+      // Keine Server-/Cron-Komponente in dieser App - wiederkehrende
+      // Aufgaben werden stattdessen beim Laden client-seitig geprueft und
+      // bei Bedarf wieder geoeffnet (Checkliste zurueckgesetzt).
+      const RECURRENCE_MS = {
+        daily: 24 * 60 * 60 * 1000,
+        weekly: 7 * 24 * 60 * 60 * 1000,
+        monthly: 30 * 24 * 60 * 60 * 1000,
+      };
+
+      async function reopenDueRecurringTasks(list) {
+        const now = Date.now();
+        const due = list.filter((t) => {
+          if (t.status !== 'done' || !RECURRENCE_MS[t.recurrence]) return false;
+          const lastDone = new Date(t.updated_at || t.created_at).getTime();
+          return now - lastDone >= RECURRENCE_MS[t.recurrence];
+        });
+        if (!due.length) return list;
+
+        const reopened = await Promise.all(
+          due.map((t) => {
+            const resetSteps = Array.isArray(t.steps) ? t.steps.map((s) => ({ ...s, done: false })) : t.steps;
+            return apiRequest(
+              'PATCH',
+              `tasks?id=eq.${encodeURIComponent(t.id)}`,
+              { status: 'open', steps: resetSteps },
+              'return=representation'
+            )
+              .then((result) => (Array.isArray(result) ? result[0] : result))
+              .catch(() => null);
+          })
+        );
+
+        const byId = new Map(reopened.filter(Boolean).map((t) => [t.id, t]));
+        return list.map((t) => byId.get(t.id) || t);
+      }
+
       async function loadTasks() {
         if (!config) return;
         hint.textContent = 'Lade Aufgaben...';
         try {
-          tasks = await apiRequest('GET', 'tasks?select=*&order=created_at.asc');
+          const fetched = await apiRequest('GET', 'tasks?select=*&order=created_at.asc');
+          tasks = await reopenDueRecurringTasks(fetched);
           hint.textContent = '';
           renderAll();
         } catch (err) {
@@ -847,6 +897,7 @@
           description: '',
           category,
           priority: 2,
+          recurrence: 'none',
           status: 'open',
           source: 'manual',
           steps: [],

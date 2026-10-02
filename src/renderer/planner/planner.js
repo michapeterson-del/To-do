@@ -155,6 +155,25 @@ function renderTaskItem(task) {
     updateTask(task.id, { priority: Number(prioritySelect.value) });
   });
 
+  const recurrenceSelect = document.createElement('select');
+  recurrenceSelect.className = 'task-move';
+  recurrenceSelect.title = 'Wiederholung aendern';
+  [
+    { value: 'none', label: '🚫 Einmalig' },
+    { value: 'daily', label: '🔁 Taeglich' },
+    { value: 'weekly', label: '📅 Woechentlich' },
+    { value: 'monthly', label: '🗓️ Monatlich' },
+  ].forEach(({ value, label }) => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = label;
+    recurrenceSelect.appendChild(option);
+  });
+  recurrenceSelect.value = task.recurrence || 'none';
+  recurrenceSelect.addEventListener('change', () => {
+    updateTask(task.id, { recurrence: recurrenceSelect.value });
+  });
+
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'task-delete';
   deleteBtn.textContent = '✕';
@@ -165,6 +184,7 @@ function renderTaskItem(task) {
   li.appendChild(body);
   li.appendChild(moveSelect);
   li.appendChild(prioritySelect);
+  li.appendChild(recurrenceSelect);
   li.appendChild(deleteBtn);
   return li;
 }
@@ -342,10 +362,40 @@ searchInput.addEventListener('input', () => {
   renderAll();
 });
 
+// Keine Server-/Cron-Komponente in dieser App - wiederkehrende Aufgaben
+// werden stattdessen beim Laden client-seitig geprueft und bei Bedarf
+// wieder geoeffnet (Checkliste zurueckgesetzt).
+const RECURRENCE_MS = {
+  daily: 24 * 60 * 60 * 1000,
+  weekly: 7 * 24 * 60 * 60 * 1000,
+  monthly: 30 * 24 * 60 * 60 * 1000,
+};
+
+async function reopenDueRecurringTasks(list) {
+  const now = Date.now();
+  const due = list.filter((t) => {
+    if (t.status !== 'done' || !RECURRENCE_MS[t.recurrence]) return false;
+    const lastDone = new Date(t.updated_at || t.created_at).getTime();
+    return now - lastDone >= RECURRENCE_MS[t.recurrence];
+  });
+  if (!due.length) return list;
+
+  const reopened = await Promise.all(
+    due.map((t) => {
+      const resetSteps = Array.isArray(t.steps) ? t.steps.map((s) => ({ ...s, done: false })) : t.steps;
+      return window.api.tasks.update(t.id, { status: 'open', steps: resetSteps }).catch(() => null);
+    })
+  );
+
+  const byId = new Map(reopened.filter(Boolean).map((t) => [t.id, t]));
+  return list.map((t) => byId.get(t.id) || t);
+}
+
 async function loadTasks() {
   hint.textContent = 'Lade Aufgaben...';
   try {
-    tasks = await window.api.tasks.list();
+    const fetched = await window.api.tasks.list();
+    tasks = await reopenDueRecurringTasks(fetched);
     hint.textContent = '';
     renderAll();
   } catch (err) {
@@ -360,6 +410,7 @@ async function addTask(category, title) {
     description: '',
     category,
     priority: 2,
+    recurrence: 'none',
     status: 'open',
     source: 'manual',
     steps: [],

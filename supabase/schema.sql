@@ -10,6 +10,7 @@ create table if not exists public.tasks (
   status text not null default 'open' check (status in ('open', 'done')),
   -- 1 = niedrig, 2 = normal, 3 = hoch
   priority smallint not null default 2 check (priority in (1, 2, 3)),
+  recurrence text not null default 'none' check (recurrence in ('none', 'daily', 'weekly', 'monthly')),
   source text not null default 'manual' check (source in ('manual', 'screenshot')),
   -- Checkliste fuer Prozess-Aufgaben: [{"id": "...", "text": "...", "done": false}, ...]
   steps jsonb not null default '[]'::jsonb,
