@@ -190,7 +190,12 @@ body {
 
 .category-toggle {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
+}
+
+#recurrenceToggle .cat-btn {
+  flex: 1 1 calc(50% - 3px);
 }
 
 .cat-btn {

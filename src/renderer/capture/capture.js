@@ -5,6 +5,7 @@ const resultView = document.getElementById('resultView');
 const titleInput = document.getElementById('titleInput');
 const descriptionInput = document.getElementById('descriptionInput');
 const categoryToggle = document.getElementById('categoryToggle');
+const recurrenceToggle = document.getElementById('recurrenceToggle');
 const duplicateNotice = document.getElementById('duplicateNotice');
 const updateFields = document.getElementById('updateFields');
 const createFields = document.getElementById('createFields');
@@ -20,6 +21,7 @@ const eventLabel = document.getElementById('eventLabel');
 const addEventBtn = document.getElementById('addEventBtn');
 
 let currentCategory = 'today';
+let currentRecurrence = 'none';
 let mode = 'create'; // 'create' | 'update' | 'duplicate'
 let lastDraft = null;
 
@@ -36,6 +38,13 @@ function setCategory(category) {
   });
 }
 
+function setRecurrence(recurrence) {
+  currentRecurrence = ['daily', 'weekly', 'monthly'].includes(recurrence) ? recurrence : 'none';
+  recurrenceToggle.querySelectorAll('.cat-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.recurrence === currentRecurrence);
+  });
+}
+
 function setMode(nextMode) {
   mode = nextMode;
   duplicateNotice.hidden = mode !== 'duplicate';
@@ -46,6 +55,10 @@ function setMode(nextMode) {
 
 categoryToggle.querySelectorAll('.cat-btn').forEach((btn) => {
   btn.addEventListener('click', () => setCategory(btn.dataset.category));
+});
+
+recurrenceToggle.querySelectorAll('.cat-btn').forEach((btn) => {
+  btn.addEventListener('click', () => setRecurrence(btn.dataset.recurrence));
 });
 
 function formatEventLabel(datetime) {
@@ -90,6 +103,7 @@ window.api.capture.onResult((draft) => {
     titleInput.value = draft.title || '';
     descriptionInput.value = draft.description || '';
     setCategory(draft.category);
+    setRecurrence('none');
   }
   if (draft.event_datetime) {
     eventNotice.hidden = false;
@@ -116,6 +130,7 @@ saveAsNewBtn.addEventListener('click', () => {
   titleInput.value = lastDraft?.matched_task_title || '';
   descriptionInput.value = '';
   setCategory('today');
+  setRecurrence('none');
   titleInput.focus();
   titleInput.select();
 });
@@ -141,6 +156,7 @@ resultView.addEventListener('submit', async (e) => {
       title,
       description: descriptionInput.value.trim(),
       category: currentCategory,
+      recurrence: currentRecurrence,
       event_datetime: lastDraft?.event_datetime || '',
       event_title: lastDraft?.event_title || '',
     };

@@ -314,8 +314,9 @@
         width: 100%; padding: 9px 10px; border-radius: 9px; border: 1px solid var(--border);
         background: var(--bg); color: var(--text); font-size: 14px; font-family: inherit; resize: none;
       }
-      .capture-category-toggle { display: flex; gap: 6px; margin-top: 4px; }
+      .capture-category-toggle { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
       .capture-cat-btn { flex: 1; padding: 8px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); color: var(--text-muted); font-size: 12.5px; font-weight: 500; }
+      #captureRecurrenceToggle .capture-cat-btn { flex: 1 1 calc(50% - 3px); }
       .capture-cat-btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 600; }
       .matched-title { font-size: 14px; font-weight: 600; margin: 4px 0; padding: 8px 10px; border-radius: 9px; background: var(--bg); }
       .link-btn { border: none; background: transparent; color: var(--accent); font-size: 12.5px; text-decoration: underline; padding: 4px 0; align-self: flex-start; }
@@ -446,6 +447,13 @@
               <button type="button" class="capture-cat-btn" data-category="today">☀️ Heute</button>
               <button type="button" class="capture-cat-btn" data-category="process">🔁 Prozess/Optimierung</button>
               <button type="button" class="capture-cat-btn" data-category="private">🔒 Privat</button>
+            </div>
+            <label class="field-label">Wiederholung</label>
+            <div class="capture-category-toggle" id="captureRecurrenceToggle">
+              <button type="button" class="capture-cat-btn" data-recurrence="none">🚫 Einmalig</button>
+              <button type="button" class="capture-cat-btn" data-recurrence="daily">🔁 Taeglich</button>
+              <button type="button" class="capture-cat-btn" data-recurrence="weekly">📅 Woechentlich</button>
+              <button type="button" class="capture-cat-btn" data-recurrence="monthly">🗓️ Monatlich</button>
             </div>
           </div>
 
@@ -1000,10 +1008,12 @@
       const captureTitleInput = document.getElementById('captureTitleInput');
       const captureDescriptionInput = document.getElementById('captureDescriptionInput');
       const captureCategoryToggle = document.getElementById('captureCategoryToggle');
+      const captureRecurrenceToggle = document.getElementById('captureRecurrenceToggle');
       const captureSaveError = document.getElementById('captureSaveError');
       const captureSubmitBtn = document.getElementById('captureSubmitBtn');
 
       let captureCategory = 'today';
+      let captureRecurrence = 'none';
       let captureMode = 'create';
       let captureLastDraft = null;
 
@@ -1019,6 +1029,13 @@
         });
       }
 
+      function setCaptureRecurrence(recurrence) {
+        captureRecurrence = ['daily', 'weekly', 'monthly'].includes(recurrence) ? recurrence : 'none';
+        captureRecurrenceToggle.querySelectorAll('.capture-cat-btn').forEach((btn) => {
+          btn.classList.toggle('active', btn.dataset.recurrence === captureRecurrence);
+        });
+      }
+
       function setCaptureMode(mode) {
         captureMode = mode;
         captureUpdateFields.style.display = mode === 'update' ? 'flex' : 'none';
@@ -1027,6 +1044,10 @@
 
       captureCategoryToggle.querySelectorAll('.capture-cat-btn').forEach((btn) => {
         btn.addEventListener('click', () => setCaptureCategory(btn.dataset.category));
+      });
+
+      captureRecurrenceToggle.querySelectorAll('.capture-cat-btn').forEach((btn) => {
+        btn.addEventListener('click', () => setCaptureRecurrence(btn.dataset.recurrence));
       });
 
       document.getElementById('captureBtn').addEventListener('click', () => {
@@ -1106,11 +1127,11 @@ waehle IMMER "private" - auch wenn der Inhalt irgendwie nach einer
 Aufgabe aussieht.
 
 Bei "create" ist "description" PFLICHT und darf NIE leer bleiben, auch wenn
-der Titel schon viel sagt: fasse dort konkret zusammen, was auf dem Foto zu
-sehen ist (wer ist beteiligt, worum geht es genau, welche Antwort/welcher
-naechste Schritt wird erwartet, ggf. Frist). Wiederhole notfalls Inhalte aus
-dem Titel in eigenen Worten, aber liefere IMMER mindestens einen
-vollstaendigen Satz.
+der Titel schon viel sagt. Halte sie KURZ und STICHWORTARTIG, keine
+ausformulierten Saetze: am besten 2-4 knappe Stichpunkte, getrennt durch
+Zeilenumbrueche, jeweils mit "- " am Anfang, jeweils nur 2-6 Woerter.
+Inhalt je nach Platz: wer ist beteiligt, worum geht es genau, welche
+Antwort/welcher naechste Schritt wird erwartet, ggf. Frist.
 
 Pruefe ausserdem, ob im Foto ein konkreter Termin mit Datum UND Uhrzeit
 genannt wird (z.B. "Meeting Montag 14 Uhr", "Termin am 3.10. um 10:30").
@@ -1236,6 +1257,7 @@ weiteren Text, ohne Markdown-Codeblock:
             captureTitleInput.value = draft.title || '';
             captureDescriptionInput.value = draft.description || '';
             setCaptureCategory(draft.category);
+            setCaptureRecurrence('none');
             showCaptureView(captureResultForm);
           }
         } catch (err) {
@@ -1249,6 +1271,7 @@ weiteren Text, ohne Markdown-Codeblock:
         captureTitleInput.value = captureLastDraft?.matched_task_title || '';
         captureDescriptionInput.value = '';
         setCaptureCategory('today');
+        setCaptureRecurrence('none');
         showCaptureView(captureResultForm);
       });
 
@@ -1275,6 +1298,8 @@ weiteren Text, ohne Markdown-Codeblock:
               title,
               description: captureDescriptionInput.value.trim(),
               category: captureCategory,
+              priority: 2,
+              recurrence: captureRecurrence,
               status: 'open',
               source: 'screenshot',
               steps: [],

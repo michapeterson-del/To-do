@@ -116,11 +116,11 @@ waehle IMMER "private" - auch wenn der Inhalt irgendwie nach einer
 Aufgabe aussieht.
 
 Bei "create" ist "description" PFLICHT und darf NIE leer bleiben, auch wenn
-der Titel schon viel sagt: fasse dort konkret zusammen, was auf dem
-Screenshot zu sehen ist (wer ist beteiligt, worum geht es genau, welche
-Antwort/welcher naechste Schritt wird erwartet, ggf. Frist). Wiederhole
-notfalls Inhalte aus dem Titel in eigenen Worten, aber liefere IMMER
-mindestens einen vollstaendigen Satz.
+der Titel schon viel sagt. Halte sie KURZ und STICHWORTARTIG, keine
+ausformulierten Saetze: am besten 2-4 knappe Stichpunkte, getrennt durch
+Zeilenumbrueche, jeweils mit "- " am Anfang, jeweils nur 2-6 Woerter.
+Inhalt je nach Platz: wer ist beteiligt, worum geht es genau, welche
+Antwort/welcher naechste Schritt wird erwartet, ggf. Frist.
 
 Pruefe ausserdem, ob im Screenshot ein konkreter Termin mit Datum UND
 Uhrzeit genannt wird (z.B. "Meeting Montag 14 Uhr", "Termin am 3.10. um
