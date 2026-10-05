@@ -7,6 +7,7 @@ const countToday = document.getElementById('countToday');
 const countProcess = document.getElementById('countProcess');
 const countPrivate = document.getElementById('countPrivate');
 const countDone = document.getElementById('countDone');
+const countSeries = document.getElementById('countSeries');
 const hint = document.getElementById('hint');
 const searchInput = document.getElementById('searchInput');
 
@@ -404,7 +405,7 @@ function renderAll() {
   renderColumn(listProcess, countProcess, (t) => t.category === 'process' && t.status !== 'done' && matchesSearch(t), byPriorityDesc);
   renderColumn(listPrivate, countPrivate, (t) => t.category === 'private' && t.status !== 'done' && matchesSearch(t), byPriorityDesc);
   renderColumn(listDone, countDone, (t) => t.status === 'done' && t.recurrence === 'none' && matchesSearch(t), byUpdatedAtDesc);
-  renderColumn(listSeries, null, (t) => t.status === 'done' && t.recurrence !== 'none' && matchesSearch(t), byUpdatedAtDesc);
+  renderColumn(listSeries, countSeries, (t) => t.status === 'done' && t.recurrence !== 'none' && matchesSearch(t), byUpdatedAtDesc);
 }
 
 searchInput.addEventListener('input', () => {
@@ -556,6 +557,23 @@ function closeDoneDrawer() {
 document.getElementById('doneToggleBtn').addEventListener('click', openDoneDrawer);
 document.getElementById('doneCloseBtn').addEventListener('click', closeDoneDrawer);
 doneBackdrop.addEventListener('click', closeDoneDrawer);
+
+const seriesDrawer = document.getElementById('seriesDrawer');
+const seriesBackdrop = document.getElementById('seriesBackdrop');
+
+function openSeriesDrawer() {
+  seriesDrawer.classList.add('open');
+  seriesBackdrop.classList.add('open');
+}
+
+function closeSeriesDrawer() {
+  seriesDrawer.classList.remove('open');
+  seriesBackdrop.classList.remove('open');
+}
+
+document.getElementById('seriesToggleBtn').addEventListener('click', openSeriesDrawer);
+document.getElementById('seriesCloseBtn').addEventListener('click', closeSeriesDrawer);
+seriesBackdrop.addEventListener('click', closeSeriesDrawer);
 document.getElementById('refreshBtn').addEventListener('click', () => loadTasks());
 document.getElementById('settingsBtn').addEventListener('click', () => {
   window.api.openSettingsWindow();
