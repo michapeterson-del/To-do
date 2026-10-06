@@ -2,6 +2,23 @@
 // eine Aufgabe extrahieren. Nutzt die HTTP-API direkt statt des SDKs, um
 // keine zusaetzliche Abhaengigkeit zu brauchen.
 
+const { nativeImage } = require('electron');
+
+// Verkleinert ein Bild auf maximal maxDimension (laengere Seite), falls
+// noetig. Screenshots von hochaufloesenden Bildschirmen (4K/5K) koennen
+// sonst die maximale Anfragegroesse der Claude-API ueberschreiten (Fehler
+// 413) - 1568px ist ausserdem die Groesse, auf die Claude Bilder intern
+// sowieso herunterskaliert, verkleinern verliert also keine erkennbaren
+// Details.
+function resizePngIfNeeded(pngBase64, maxDimension) {
+  const image = nativeImage.createFromBuffer(Buffer.from(pngBase64, 'base64'));
+  const { width, height } = image.getSize();
+  if (Math.max(width, height) <= maxDimension) return pngBase64;
+  const scale = maxDimension / Math.max(width, height);
+  const resized = image.resize({ width: Math.round(width * scale), height: Math.round(height * scale) });
+  return resized.toPNG().toString('base64');
+}
+
 function buildPrompt(existingTasks) {
   const tasksForPrompt = existingTasks.map((t) => ({
     id: t.id,
@@ -185,9 +202,10 @@ async function requestOnce(config, pngBase64, existingTasks) {
 }
 
 async function analyzeScreenshot(config, pngBase64, existingTasks = []) {
+  const resizedPngBase64 = resizePngIfNeeded(pngBase64, 1568);
   let res;
   for (let attempt = 0; ; attempt++) {
-    res = await requestOnce(config, pngBase64, existingTasks);
+    res = await requestOnce(config, resizedPngBase64, existingTasks);
     if (res.ok || !RETRY_STATUS_CODES.includes(res.status) || attempt >= RETRY_DELAYS_MS.length) break;
     await delay(RETRY_DELAYS_MS[attempt]);
   }

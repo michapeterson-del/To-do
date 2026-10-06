@@ -220,6 +220,24 @@ async function analyzeScreenshot(base64Png, existingTasks) {
   }
 }
 
+// Verkleinert ein Bild auf maximal maxDimension (laengere Seite), falls
+// noetig. Moderne iPhone-Screenshots sind in voller Aufloesung teils zu
+// gross fuer die Claude-API (Fehler 413 "Request exceeds the maximum
+// size") - 1568px ist ausserdem die Groesse, auf die Claude Bilder intern
+// sowieso herunterskaliert, verkleinern verliert also keine erkennbaren
+// Details.
+function resizeImageIfNeeded(image, maxDimension) {
+  const { width, height } = image.size;
+  if (Math.max(width, height) <= maxDimension) return image;
+  const scale = maxDimension / Math.max(width, height);
+  const newSize = new Size(Math.round(width * scale), Math.round(height * scale));
+  const ctx = new DrawContext();
+  ctx.size = newSize;
+  ctx.respectScreenScale = false;
+  ctx.drawImageInRect(image, new Rect(0, 0, newSize.width, newSize.height));
+  return ctx.getImage();
+}
+
 async function showAlert(title, message) {
   // Ueber die Action-Taste/Siri sind interaktive Alerts nicht erlaubt -
   // eine Benachrichtigung funktioniert dagegen ueberall.
@@ -240,7 +258,8 @@ async function main() {
     await showAlert("Kein Screenshot gefunden", "Mach zuerst einen Screenshot.");
     return;
   }
-  const base64Png = Data.fromPNG(photos[0]).toBase64String();
+  const resized = resizeImageIfNeeded(photos[0], 1568);
+  const base64Png = Data.fromPNG(resized).toBase64String();
 
   // Aufraeumen: das Bild wurde nur zwischengespeichert, damit es sicher
   // uebergeben werden kann - in Fotos braucht es danach keiner mehr.
