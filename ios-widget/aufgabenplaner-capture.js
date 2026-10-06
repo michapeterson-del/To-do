@@ -160,7 +160,14 @@ const RETRY_DELAYS_MS = [1500, 3000];
 
 async function requestOnce(base64Png, existingTasks) {
   const req = new Request("https://api.anthropic.com/v1/messages");
-  req.timeoutInterval = 90;
+  // Bewusst knapper als man denkt: laeuft der Kurzbefehl im Hintergrund
+  // (z.B. ueber die Action-Taste bei gesperrtem Bildschirm), killt iOS
+  // selbst nach kurzer Zeit hart ab ("Received timeout when running
+  // script") - dann kommt ueberhaupt keine Benachrichtigung mehr, auch
+  // keine Fehlermeldung. Ein knappes eigenes Zeitlimit gibt dem Script
+  // bessere Chancen, selbst zuerst aufzugeben und wenigstens eine
+  // Fehlermeldung zu zeigen, bevor iOS den ganzen Vorgang abwuergt.
+  req.timeoutInterval = 20;
   req.method = "POST";
   req.headers = {
     "x-api-key": ANTHROPIC_API_KEY,
