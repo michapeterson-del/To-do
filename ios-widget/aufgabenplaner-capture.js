@@ -52,7 +52,12 @@ function supabaseRequest(method, pathAndQuery, body) {
 }
 
 async function fetchOpenTasks() {
-  const req = supabaseRequest("GET", "tasks?select=id,title,description,category,steps&status=eq.open");
+  // Limit + order: haelt die Anfrage an Supabase UND den Prompt an Claude
+  // klein, auch wenn viele Aufgaben offen sind - wichtig fuers Zeitlimit.
+  const req = supabaseRequest(
+    "GET",
+    "tasks?select=id,title,description,category,steps&status=eq.open&order=created_at.desc&limit=20"
+  );
   const raw = await req.loadString();
   const status = req.response ? req.response.statusCode : "?";
   let data;
@@ -160,14 +165,12 @@ const RETRY_DELAYS_MS = [1500, 3000];
 
 async function requestOnce(base64Png, existingTasks) {
   const req = new Request("https://api.anthropic.com/v1/messages");
-  // Bewusst knapper als man denkt: laeuft der Kurzbefehl im Hintergrund
-  // (z.B. ueber die Action-Taste bei gesperrtem Bildschirm), killt iOS
-  // selbst nach kurzer Zeit hart ab ("Received timeout when running
-  // script") - dann kommt ueberhaupt keine Benachrichtigung mehr, auch
-  // keine Fehlermeldung. Ein knappes eigenes Zeitlimit gibt dem Script
-  // bessere Chancen, selbst zuerst aufzugeben und wenigstens eine
-  // Fehlermeldung zu zeigen, bevor iOS den ganzen Vorgang abwuergt.
-  req.timeoutInterval = 20;
+  // Bewusst knapp: die gesamte "Run Script"-Aktion hat in Kurzbefehle ein
+  // eigenes, hartes Zeitlimit (iOS-Meldung "Der Vorgang dauerte zu lange").
+  // Das gilt fuer den KOMPLETTEN Scriptablauf (Supabase + Claude +
+  // Speichern), nicht nur fuer diese eine Anfrage - je knapper wir hier
+  // sind, desto eher passt der gesamte Ablauf noch darunter.
+  req.timeoutInterval = 15;
   req.method = "POST";
   req.headers = {
     "x-api-key": ANTHROPIC_API_KEY,
@@ -176,7 +179,7 @@ async function requestOnce(base64Png, existingTasks) {
   };
   req.body = JSON.stringify({
     model: CLAUDE_MODEL,
-    max_tokens: 1024,
+    max_tokens: 512,
     messages: [
       {
         role: "user",
@@ -193,17 +196,14 @@ async function requestOnce(base64Png, existingTasks) {
 }
 
 async function analyzeScreenshot(base64Png, existingTasks) {
+  // Bei einer eigenen Zeitueberschreitung (networkError) bewusst KEIN
+  // Retry mehr: das wuerde die Gesamtlaufzeit verdoppeln und das harte
+  // iOS-Zeitlimit der gesamten "Run Script"-Aktion erst recht reissen.
+  // Nur bei 503/529 (Server antwortet schnell mit "ueberlastet") lohnt
+  // sich ein kurzer erneuter Versuch, weil der kaum Zeit kostet.
   let raw, status;
   for (let attempt = 0; ; attempt++) {
-    try {
-      ({ raw, status } = await requestOnce(base64Png, existingTasks));
-    } catch (networkError) {
-      // Netzwerkfehler/Zeitueberschreitung - genau wie bei 503/529 kurz
-      // erneut versuchen, bevor aufgegeben wird.
-      if (attempt >= RETRY_DELAYS_MS.length) throw networkError;
-      await delay(RETRY_DELAYS_MS[attempt]);
-      continue;
-    }
+    ({ raw, status } = await requestOnce(base64Png, existingTasks));
     if (!RETRY_STATUS_CODES.includes(status) || attempt >= RETRY_DELAYS_MS.length) break;
     await delay(RETRY_DELAYS_MS[attempt]);
   }
