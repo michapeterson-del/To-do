@@ -75,6 +75,14 @@ Zeilenumbrueche, jeweils mit "- " am Anfang, jeweils nur 2-6 Woerter.
 Inhalt je nach Platz: wer ist beteiligt, worum geht es genau, welche
 Antwort/welcher naechste Schritt wird erwartet, ggf. Frist.
 
+Erkennst du im Screenshot einen wiederkehrenden Geschaeftspartner/
+Lieferanten/Kunden (z.B. Fronius, EcoFlow, Tepto) oder ein Thema, das
+typischerweise in einem regelmaessigen Meeting dazu besprochen wird,
+ergaenze die description um einen zusaetzlichen Stichpunkt wie "- Fuer
+naechstes [Name]-Meeting vormerken". Nur wenn das wirklich naheliegend
+ist, sonst weglassen - keine echte Kalenderanbindung vorhanden, das ist
+nur eine inhaltliche Vermutung.
+
 Pruefe ausserdem, ob im Screenshot ein konkreter Termin mit Datum UND
 Uhrzeit genannt wird (z.B. "Meeting Montag 14 Uhr", "Termin am 3.10. um
 10:30"). Falls ja: "event_datetime" im Format JJJJ-MM-TTTHH:MM:00, sonst
