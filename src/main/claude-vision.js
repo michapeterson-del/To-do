@@ -185,28 +185,45 @@ function delay(ms) {
 const RETRY_STATUS_CODES = [503, 529];
 const RETRY_DELAYS_MS = [1500, 3000];
 
+// Ohne eigenes Zeitlimit wuerde ein haengendes Netzwerk (Proxy, WLAN) den
+// "Screenshot wird analysiert..."-Spinner fuer immer drehen lassen, da
+// fetch() sonst nie ablehnt und nie "capture:error" gesendet wird.
+const REQUEST_TIMEOUT_MS = 20000;
+
 async function requestOnce(config, pngBase64, existingTasks) {
-  return fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': config.anthropicApiKey,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: config.claudeModel || 'claude-sonnet-5',
-      max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/png', data: pngBase64 } },
-            { type: 'text', text: buildPrompt(existingTasks) },
-          ],
-        },
-      ],
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'x-api-key': config.anthropicApiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: config.claudeModel || 'claude-sonnet-5',
+        max_tokens: 1024,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: 'image/png', data: pngBase64 } },
+              { type: 'text', text: buildPrompt(existingTasks) },
+            ],
+          },
+        ],
+      }),
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('Zeitueberschreitung: Keine Antwort von Claude nach 20 Sekunden. Bitte erneut versuchen.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function analyzeScreenshot(config, pngBase64, existingTasks = []) {

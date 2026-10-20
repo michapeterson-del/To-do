@@ -17,12 +17,31 @@ function restUrl(config, pathAndQuery) {
   return `${base}/rest/v1/${pathAndQuery}`;
 }
 
+// Ohne eigenes Zeitlimit wuerde ein haengendes Netzwerk fetch() nie
+// ablehnen lassen - ein try/catch drumherum (z.B. beim Aufgaben-Abgleich
+// vor der Screenshot-Analyse) wuerde dann nie greifen und die ganze
+// Aktion wuerde unbegrenzt haengen bleiben.
+const REQUEST_TIMEOUT_MS = 15000;
+
 async function request(config, method, pathAndQuery, body, prefer) {
-  const res = await fetch(restUrl(config, pathAndQuery), {
-    method,
-    headers: baseHeaders(config, prefer),
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch(restUrl(config, pathAndQuery), {
+      method,
+      signal: controller.signal,
+      headers: baseHeaders(config, prefer),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error(`Supabase ${method} ${pathAndQuery}: Zeitueberschreitung nach 15 Sekunden.`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Supabase ${method} ${pathAndQuery} fehlgeschlagen (${res.status}): ${text}`);
