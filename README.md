@@ -10,8 +10,8 @@ Screenshot, schickt ihn an die Claude API (Vision) und schlaegt daraus eine
 Aufgabe inkl. Kategorie vor, die du kurz bestaetigen/bearbeiten und speichern
 kannst.
 
-Aufgaben werden in Supabase (Postgres) gespeichert, damit sie zentral verfuegbar
-sind.
+Aufgaben werden ueber eine eigene REST-API (PostgREST vor Postgres, gehostet
+auf eigenem Server via Coolify) gespeichert, damit sie zentral verfuegbar sind.
 
 ## Einrichtung
 
@@ -21,15 +21,14 @@ sind.
 npm install
 ```
 
-### 2. Supabase-Projekt anlegen
+### 2. API-Zugangsdaten eintragen
 
-1. Kostenloses Projekt auf [supabase.com](https://supabase.com) anlegen.
-2. Im SQL-Editor den Inhalt von [`supabase/schema.sql`](supabase/schema.sql) ausfuehren.
-3. Unter **Project Settings → API** die **Project URL** und den **anon public key** kopieren.
+Die API laeuft unter `https://aufgaben.micha-apps.de` (Endpunkt `/rest/v1/`,
+Header `apikey`). URL und API-Key traegst du in den App-Einstellungen ein
+(gleiche Werte wie in der Mobile-Ansicht und den iOS-Scripts).
 
-> Hinweis: Die Tabelle ist bewusst offen fuer den anon-Key konfiguriert (kein
-> Login noetig), da dies ein reines Einzelnutzer-Tool ist. Teile URL/Key nicht
-> mit anderen.
+> Hinweis: Der API-Key hat vollen Lese-/Schreibzugriff auf die Tabelle, da
+> dies ein reines Einzelnutzer-Tool ist. Teile URL/Key nicht mit anderen.
 
 ### 3. Anthropic API-Key erstellen
 
@@ -43,7 +42,7 @@ npm start
 
 Beim ersten Start oeffnet sich automatisch das Einstellungsfenster. Dort:
 
-- Supabase-URL + anon key eintragen
+- API-URL + API-Key eintragen
 - Anthropic API-Key eintragen
 - Claude-Modell pruefen (Standard: `claude-sonnet-5`)
 - Gewuenschtes Tastenkuerzel eintragen (Standard: `CommandOrControl+Shift+T`,
@@ -71,31 +70,31 @@ Sicherheit → Bildschirmaufnahme** einmalig Zugriff.
 
 ```
 src/main/        Electron-Main-Process (Fenster, IPC, Tastenkuerzel, Screenshot,
-                  Claude-Anfrage, Supabase-REST-Client, lokale Einstellungen)
+                  Claude-Anfrage, REST-Client fuer die API, lokale Einstellungen)
 src/preload/      contextBridge-API fuer die Renderer-Fenster
 src/renderer/      Drei einfache HTML/CSS/JS-Fenster: planner, capture, settings
-supabase/schema.sql  Datenbankschema
+supabase/schema.sql  Datenbankschema (PostgREST-kompatibel)
 scripts/generate-icons.js  Erzeugt build/icon.png und build/tray.png
 ```
 
-Es werden bewusst keine zusaetzlichen Laufzeit-Abhaengigkeiten (Supabase-SDK,
-Anthropic-SDK) genutzt – beide Dienste werden ueber das in Electron eingebaute
-`fetch()` direkt per REST/HTTP angesprochen, um die App schlank zu halten.
+Es werden bewusst keine zusaetzlichen Laufzeit-Abhaengigkeiten genutzt – beide
+Dienste werden ueber das in Electron eingebaute `fetch()` direkt per REST/HTTP
+angesprochen, um die App schlank zu halten.
 
 ## Bekannte Grenzen
 
 - Kein Echtzeit-Sync zwischen mehreren gleichzeitig offenen Fenstern/Geraeten –
   die Liste aktualisiert sich beim Oeffnen, bei Fokus und nach eigenen
   Aenderungen.
-- Der Supabase anon-Key hat vollen Lese-/Schreibzugriff auf die Tabelle (siehe
-  Hinweis oben) – fuer den persoenlichen Gebrauch gedacht.
+- Der API-Key hat vollen Lese-/Schreibzugriff auf die Tabelle (siehe Hinweis
+  oben) – fuer den persoenlichen Gebrauch gedacht.
 - Der Screenshot wird nur zur Analyse an die Claude API gesendet und nirgends
-  gespeichert; in Supabase landet ausschliesslich der daraus erkannte
+  gespeichert; in der Datenbank landet ausschliesslich der daraus erkannte
   Aufgabentext.
 
 ## Naechste moegliche Schritte
 
 - Installer/Auto-Update via `electron-builder` fuer eine gepackte App.
 - App-Autostart beim Systemstart einrichten (`app.setLoginItemSettings`).
-- Echtzeit-Sync ueber Supabase Realtime, falls mehrere Geraete gleichzeitig
+- Echtzeit-Sync, falls mehrere Geraete gleichzeitig
   genutzt werden.

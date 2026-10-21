@@ -10,16 +10,14 @@
 
     <form id="settingsForm">
       <fieldset>
-        <legend>Supabase (Cloud-Speicher)</legend>
-        <label for="supabaseUrl">Projekt-URL</label>
-        <input id="supabaseUrl" type="text" placeholder="https://xxxx.supabase.co" />
+        <legend>API (Cloud-Speicher)</legend>
+        <label for="supabaseUrl">API-URL</label>
+        <input id="supabaseUrl" type="text" placeholder="https://aufgaben.micha-apps.de" />
 
-        <label for="supabaseAnonKey">Anon Public Key</label>
-        <input id="supabaseAnonKey" type="password" placeholder="eyJhbGciOi..." />
+        <label for="supabaseAnonKey">API-Key</label>
+        <input id="supabaseAnonKey" type="password" placeholder="..." />
         <p class="help">
-          Projekt auf supabase.com anlegen, das SQL aus <code>supabase/schema.sql</code>
-          im SQL-Editor ausfuehren, dann URL &amp; anon key unter
-          Project Settings &rarr; API kopieren.
+          API-URL und API-Key wie fuer die anderen Geraete (Handy/iOS) verwenden.
         </p>
       </fieldset>
 

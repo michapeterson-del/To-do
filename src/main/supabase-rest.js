@@ -36,7 +36,7 @@ async function request(config, method, pathAndQuery, body, prefer) {
     });
   } catch (err) {
     if (err.name === 'AbortError') {
-      throw new Error(`Supabase ${method} ${pathAndQuery}: Zeitueberschreitung nach 15 Sekunden.`);
+      throw new Error(`API ${method} ${pathAndQuery}: Zeitueberschreitung nach 15 Sekunden.`);
     }
     throw err;
   } finally {
@@ -44,7 +44,7 @@ async function request(config, method, pathAndQuery, body, prefer) {
   }
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`Supabase ${method} ${pathAndQuery} fehlgeschlagen (${res.status}): ${text}`);
+    throw new Error(`API ${method} ${pathAndQuery} fehlgeschlagen (${res.status}): ${text}`);
   }
   if (res.status === 204) return null;
   const text = await res.text();

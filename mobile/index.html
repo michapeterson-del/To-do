@@ -408,16 +408,16 @@
 
     <dialog id="settingsDialog">
       <form class="settings-body" id="settingsForm">
-        <h2>Supabase verbinden</h2>
+        <h2>API verbinden</h2>
         <p class="help">
           Dieselben Zugangsdaten wie in der Desktop-App (Einstellungen &rarr;
-          Projekt-URL &amp; Anon Public Key). Sie werden nur auf diesem Gerät
+          API-URL &amp; API-Key). Sie werden nur auf diesem Gerät
           im Browser gespeichert.
         </p>
-        <label for="urlInput">Projekt-URL</label>
-        <input id="urlInput" type="text" placeholder="https://xxxx.supabase.co" required />
-        <label for="keyInput">Anon Public Key</label>
-        <input id="keyInput" type="password" placeholder="eyJhbGciOi..." required />
+        <label for="urlInput">API-URL</label>
+        <input id="urlInput" type="text" placeholder="https://aufgaben.micha-apps.de" required />
+        <label for="keyInput">API-Key</label>
+        <input id="keyInput" type="password" placeholder="..." required />
 
         <h2 style="margin-top: 16px">Claude (Foto-Analyse)</h2>
         <p class="help">Optional - nur noetig, wenn du "Aufgabe aus Foto erfassen" nutzen willst.</p>
@@ -614,7 +614,7 @@
         });
         if (!res.ok) {
           const text = await res.text().catch(() => '');
-          throw new Error(`Supabase ${method} fehlgeschlagen (${res.status}): ${text}`);
+          throw new Error(`API ${method} fehlgeschlagen (${res.status}): ${text}`);
         }
         if (res.status === 204) return null;
         const text = await res.text();
