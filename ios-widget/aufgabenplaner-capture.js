@@ -122,10 +122,11 @@ Aufgabe aussieht.
 
 Bei "create" ist "description" PFLICHT und darf NIE leer bleiben, auch wenn
 der Titel schon viel sagt. Halte sie KURZ und STICHWORTARTIG, keine
-ausformulierten Saetze: am besten 2-4 knappe Stichpunkte, getrennt durch
-Zeilenumbrueche, jeweils mit "- " am Anfang, jeweils nur 2-6 Woerter.
+ausformulierten Saetze: MAXIMAL 3 knappe Stichpunkte (lieber weniger), getrennt
+durch Zeilenumbrueche, jeweils mit "- " am Anfang, jeweils nur 2-6 Woerter.
 Inhalt je nach Platz: wer ist beteiligt, worum geht es genau, welche
-Antwort/welcher naechste Schritt wird erwartet, ggf. Frist.
+Antwort/welcher naechste Schritt wird erwartet, ggf. Frist. Die gesamte
+Antwort (inkl. description) muss klar unter 500 Tokens bleiben.
 
 Erkennst du im Screenshot einen wiederkehrenden Geschaeftspartner/
 Lieferanten/Kunden (z.B. Fronius, EcoFlow, Tepto) oder ein Thema, das
@@ -187,7 +188,10 @@ async function requestOnce(base64Png, existingTasks) {
   };
   req.body = JSON.stringify({
     model: CLAUDE_MODEL,
-    max_tokens: 512,
+    // War 512 - bei Screenshots mit viel Text (z.B. lange Chats/Belege)
+    // riss Claude damit manchmal mitten im JSON ab ("kein gueltiges JSON").
+    // 768 gibt etwas Puffer, bleibt aber klein genug fuers Zeitlimit.
+    max_tokens: 768,
     messages: [
       {
         role: "user",
