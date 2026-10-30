@@ -99,9 +99,16 @@ Monats erkennbar ist (z.B. "jeden 15."): "recurrence_day" = diese Zahl
 (1-31) als Zahl, sonst "recurrence_day" = null. Im Zweifel IMMER
 "recurrence" = "none" waehlen statt zu raten.
 
+Pruefe ausserdem bei "create", ob der Screenshot mehrere klar abgegrenzte
+Teilschritte/offene Punkte zeigt (z.B. eine nummerierte Liste von Fragen,
+To-dos oder ein mehrstufiger Ablauf). Falls ja: gib diese zusaetzlich als
+"steps" zurueck - eine Liste von maximal 6 kurzen Stichpunkten (je 3-10
+Woerter), die als Checkliste an die Aufgabe angehaengt wird. Sonst leere
+Liste.
+
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt in genau diesem Format, ohne
 weiteren Text, ohne Markdown-Codeblock:
-{"action": "create, update oder duplicate", "matched_task_id": "id der passenden Aufgabe oder null", "title": "kurzer Aufgabentitel (bei create)", "description": "1-2 Saetze Kontext (bei create)", "category": "today, process oder private (bei create)", "update_note": "neuer Schritt (nur bei update)", "event_datetime": "JJJJ-MM-TTTHH:MM:00 oder leerer String (bei create)", "event_title": "kurzer Terminname oder leerer String (bei create)", "recurrence": "none, daily, weekly oder monthly (bei create)", "recurrence_day": "Zahl 1-31 oder null (nur bei monthly mit erkennbarem Tag)"}`;
+{"action": "create, update oder duplicate", "matched_task_id": "id der passenden Aufgabe oder null", "title": "kurzer Aufgabentitel (bei create)", "description": "1-2 Saetze Kontext (bei create)", "category": "today, process oder private (bei create)", "update_note": "neuer Schritt (nur bei update)", "event_datetime": "JJJJ-MM-TTTHH:MM:00 oder leerer String (bei create)", "event_title": "kurzer Terminname oder leerer String (bei create)", "recurrence": "none, daily, weekly oder monthly (bei create)", "recurrence_day": "Zahl 1-31 oder null (nur bei monthly mit erkennbarem Tag)", "steps": ["bei create: Liste kurzer Teilschritte, sonst leere Liste"]}`;
 }
 
 function parseTaskJson(raw, existingTasks) {
@@ -143,6 +150,11 @@ function parseTaskJson(raw, existingTasks) {
       recurrence === 'monthly' && Number.isInteger(recurrenceDayNum) && recurrenceDayNum >= 1 && recurrenceDayNum <= 31
         ? recurrenceDayNum
         : null;
+    const steps = (Array.isArray(parsed.steps) ? parsed.steps : [])
+      .map((s) => String(s || '').slice(0, 200).trim())
+      .filter(Boolean)
+      .slice(0, 6)
+      .map((text, i) => ({ id: `s${Date.now()}_${i}`, text, done: false }));
     return {
       action: 'create',
       title,
@@ -150,6 +162,7 @@ function parseTaskJson(raw, existingTasks) {
       category,
       recurrence,
       recurrence_day: recurrenceDay,
+      steps,
       event_datetime: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(eventDatetime) ? eventDatetime : '',
       event_title: eventTitle || title,
     };

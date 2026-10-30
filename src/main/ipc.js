@@ -61,6 +61,7 @@ function registerIpcHandlers({ registerHotkey }) {
         source: 'screenshot',
         event_datetime: draft.event_datetime,
         event_title: draft.event_title,
+        steps: draft.steps,
       });
     }
     closeCaptureWindow();

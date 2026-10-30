@@ -171,6 +171,7 @@ resultView.addEventListener('submit', async (e) => {
       recurrence_day: currentRecurrence === 'monthly' ? currentRecurrenceDay : null,
       event_datetime: lastDraft?.event_datetime || '',
       event_title: lastDraft?.event_title || '',
+      steps: Array.isArray(lastDraft?.steps) ? lastDraft.steps : [],
     };
   }
 
