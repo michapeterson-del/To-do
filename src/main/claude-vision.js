@@ -122,7 +122,7 @@ function parseTaskJson(raw, existingTasks) {
   try {
     parsed = JSON.parse(cleaned);
   } catch {
-    throw new Error('Die KI-Antwort konnte nicht als Aufgabe interpretiert werden.');
+    throw new Error(`Die KI-Antwort konnte nicht als Aufgabe interpretiert werden: ${cleaned.slice(0, 300)}`);
   }
 
   const validIds = new Set(existingTasks.map((t) => t.id));
