@@ -1,6 +1,14 @@
 const { ipcMain } = require('electron');
 const { readConfig, writeConfig, isConfigured } = require('./config-store');
-const { listTasks, createTask, updateTask, deleteTask, latestEinkaufReport } = require('./supabase-rest');
+const {
+  listTasks,
+  createTask,
+  updateTask,
+  deleteTask,
+  latestEinkaufReport,
+  listPostfachVorschlaege,
+  updatePostfachVorschlag,
+} = require('./supabase-rest');
 const { closeCaptureWindow, getPlannerWindow, createSettingsWindow, closeSelectionWindow } = require('./windows');
 const { runCaptureFlow, analyzeRegionAndShowResult } = require('./capture-flow');
 const { addCalendarEvent } = require('./calendar');
@@ -44,6 +52,17 @@ function registerIpcHandlers({ registerHotkey }) {
     const config = readConfig();
     if (!isConfigured(config)) return null;
     return latestEinkaufReport(config);
+  });
+
+  ipcMain.handle('postfach:list', async () => {
+    const config = readConfig();
+    if (!isConfigured(config)) return [];
+    return listPostfachVorschlaege(config);
+  });
+
+  ipcMain.handle('postfach:update', async (_event, { id, patch }) => {
+    const config = readConfig();
+    return updatePostfachVorschlag(config, id, patch);
   });
 
   ipcMain.handle('capture:trigger', () => {

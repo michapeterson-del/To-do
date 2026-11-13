@@ -397,6 +397,18 @@
       .ek-task-btn { align-self: flex-start; margin-top: 4px; padding: 5px 10px; font-size: 12px; }
       .ek-task-btn:disabled { opacity: 0.6; cursor: default; }
       .view-toggle.active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+      .ek-tabs { display: flex; gap: 4px; margin: 8px 0 12px; border-bottom: 1px solid var(--border); }
+      .ek-tab { border: none; background: transparent; color: var(--text-muted); font-size: 13px; padding: 8px 12px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+      .ek-tab.active { color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
+      .ek-when { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+      .ek-kind-promotion { border-left-color: var(--accent); }
+      .ek-kind-price_change { border-left-color: var(--ek-warn); }
+      .ek-kind-delivery_date { border-left-color: var(--ek-bad); }
+      .ek-kind-other { border-left-color: var(--text-muted); }
+      .ek-closed { opacity: 0.6; }
+      .ek-suggestion { font-size: 12.5px; padding: 6px 8px; border-radius: 8px; background: var(--bg); overflow-wrap: anywhere; }
+      .ek-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+      .ek-quiet { color: var(--text-muted); }
     </style>
   </head>
   <body>
@@ -569,7 +581,7 @@
       //
       // Alle Inhalte vom Agenten werden per textContent gesetzt (nie innerHTML).
 
-      function createEinkaufDashboard({ root, loadReport, getTasks, createTask }) {
+      function createEinkaufDashboard({ root, loadReport, loadSuggestions, updateSuggestion, getTasks, createTask }) {
         const PROBLEMS = {
           overdue: { label: 'Überfällig', icon: '⏰' },
           unconfirmed: { label: 'Nicht bestätigt', icon: '❔' },
@@ -581,10 +593,21 @@
         const eur = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
         const num = new Intl.NumberFormat('de-DE');
 
+        const KINDS = {
+          promotion: { label: 'Promotion → Vertrieb', icon: '📣' },
+          price_change: { label: 'Preisänderung', icon: '💶' },
+          delivery_date: { label: 'Liefertermin', icon: '🚚' },
+          other: { label: 'Sonstiges', icon: '✉️' },
+        };
+
         let report = null;
         let filter = 'all';
         let error = '';
         let loading = false;
+        let tab = 'orders';
+        let suggestions = [];
+        let mailError = '';
+        let mailFilter = 'all';
 
         function el(tag, className, text) {
           const node = document.createElement(tag);
@@ -692,11 +715,19 @@
           return card;
         }
 
+        function kindOf(m) {
+          return KINDS[m.kind] ? m.kind : 'other';
+        }
+
+        function openSuggestions() {
+          return suggestions.filter((m) => m && m.status === 'open');
+        }
+
         function render() {
           root.innerHTML = '';
 
           const head = el('div', 'ek-head');
-          head.appendChild(el('h2', 'ek-title', '📦 Einkauf – offene Bestellungen'));
+          head.appendChild(el('h2', 'ek-title', '📦 Einkauf'));
           const refresh = el('button', 'btn btn-ghost', loading ? '…' : '⟳');
           refresh.type = 'button';
           refresh.title = 'Neu laden';
@@ -704,6 +735,147 @@
           head.appendChild(refresh);
           root.appendChild(head);
 
+          const tabs = el('div', 'ek-tabs');
+          const openCount = openSuggestions().length;
+          for (const [key, label] of [
+            ['orders', 'Offene Bestellungen'],
+            ['mail', `📬 Postfach${openCount ? ` (${openCount})` : ''}`],
+          ]) {
+            const t = el('button', 'ek-tab' + (tab === key ? ' active' : ''), label);
+            t.type = 'button';
+            t.addEventListener('click', () => {
+              tab = key;
+              render();
+            });
+            tabs.appendChild(t);
+          }
+          root.appendChild(tabs);
+
+          if (tab === 'mail') renderMail();
+          else renderOrders();
+        }
+
+        function renderSuggestion(m) {
+          const kind = KINDS[kindOf(m)];
+          const card = el('li', `ek-item ek-mail ek-kind-${kindOf(m)}` + (m.status !== 'open' ? ' ek-closed' : ''));
+
+          const head = el('div', 'ek-item-head');
+          head.appendChild(el('span', 'ek-problem', `${kind.icon} ${kind.label}`));
+          if (m.received_at) head.appendChild(el('span', 'ek-when', formatDateTime(m.received_at)));
+          card.appendChild(head);
+
+          const who = [m.supplier, m.sender && m.sender !== m.supplier ? m.sender : ''].filter(Boolean).join(' · ');
+          if (who) card.appendChild(el('div', 'ek-supplier', who));
+          if (m.subject) card.appendChild(el('div', 'ek-order', m.subject));
+          if (m.summary) card.appendChild(el('div', 'ek-article', m.summary));
+
+          const d = m.details && typeof m.details === 'object' ? m.details : {};
+          const money = (v) => (v == null || v === '' || !Number.isFinite(Number(v)) ? '?' : eur.format(Number(v)));
+          const day = (v) => (v ? formatDate(v) : '?');
+          const facts = el('div', 'ek-meta');
+          if (m.order_no) facts.appendChild(el('span', '', `Bestellung ${m.order_no}`));
+          if (m.article) facts.appendChild(el('span', 'ek-muted', m.article));
+          if (d.old_price != null || d.new_price != null) facts.appendChild(el('span', 'ek-days', `${money(d.old_price)} → ${money(d.new_price)}`));
+          if (d.old_date || d.new_date) facts.appendChild(el('span', 'ek-days', `${day(d.old_date)} → ${day(d.new_date)}`));
+          if (d.valid_from || d.valid_until) facts.appendChild(el('span', 'ek-muted', `gültig ${day(d.valid_from)} – ${day(d.valid_until)}`));
+          if (facts.childNodes.length) card.appendChild(facts);
+
+          if (m.suggestion) {
+            const sug = el('div', 'ek-suggestion');
+            sug.appendChild(el('strong', '', 'Vorschlag: '));
+            sug.appendChild(document.createTextNode(m.suggestion));
+            card.appendChild(sug);
+          }
+
+          if (m.status !== 'open') {
+            card.appendChild(el('div', 'ek-muted', m.status === 'done' ? '✓ erledigt' : 'ignoriert'));
+            return card;
+          }
+
+          const actions = el('div', 'ek-actions');
+          const buttons = [];
+          const setStatus = async (status) => {
+            await updateSuggestion(m.id, { status });
+            m.status = status;
+            render();
+          };
+          const wire = (label, extraClass, fn) => {
+            const b = el('button', 'btn ek-task-btn' + (extraClass ? ` ${extraClass}` : ''), label);
+            b.type = 'button';
+            b.addEventListener('click', async () => {
+              buttons.forEach((x) => (x.disabled = true));
+              try {
+                await fn();
+              } catch (err) {
+                buttons.forEach((x) => (x.disabled = false));
+                b.textContent = `Fehler: ${err.message || err}`;
+              }
+            });
+            buttons.push(b);
+            actions.appendChild(b);
+          };
+          wire('+ Aufgabe', '', async () => {
+            const lines = [
+              m.summary || '',
+              m.suggestion ? `Vorschlag: ${m.suggestion}` : '',
+              m.subject ? `Mail: ${m.subject}${m.sender ? ` (${m.sender})` : ''}` : '',
+              '(aus dem Postfach-Agenten)',
+            ].filter(Boolean);
+            const title = `${kind.icon} ${m.supplier ? m.supplier + ': ' : ''}${m.suggestion || m.subject || kind.label}`.slice(0, 200);
+            await createTask({
+              title,
+              description: lines.join('\n'),
+              category: 'today',
+              priority: m.kind === 'delivery_date' || m.kind === 'price_change' ? 3 : 2,
+            });
+            await setStatus('done');
+          });
+          wire('✓ Erledigt', '', () => setStatus('done'));
+          wire('Ignorieren', 'ek-quiet', () => setStatus('dismissed'));
+          card.appendChild(actions);
+          return card;
+        }
+
+        function renderMail() {
+          if (mailError) {
+            root.appendChild(el('p', 'ek-empty', mailError));
+            return;
+          }
+          const open = openSuggestions();
+          const chips = el('div', 'ek-chips');
+          const defs = [['all', 'Alle offen', open.length]]
+            .concat(
+              Object.keys(KINDS)
+                .map((k) => [k, `${KINDS[k].icon} ${KINDS[k].label}`, open.filter((m) => kindOf(m) === k).length])
+                .filter(([, , c]) => c > 0)
+            )
+            .concat([['closed', 'Erledigt', suggestions.length - open.length]]);
+          for (const [key, label, count] of defs) {
+            const chip = el('button', 'ek-chip' + (mailFilter === key ? ' active' : ''), `${label} ${count}`);
+            chip.type = 'button';
+            chip.addEventListener('click', () => {
+              mailFilter = key;
+              render();
+            });
+            chips.appendChild(chip);
+          }
+          root.appendChild(chips);
+
+          let visible;
+          if (mailFilter === 'closed') visible = suggestions.filter((m) => m && m.status !== 'open');
+          else if (mailFilter === 'all') visible = open;
+          else visible = open.filter((m) => kindOf(m) === mailFilter);
+
+          const list = el('ul', 'ek-list');
+          if (!visible.length) {
+            const text = loading ? 'Lade Vorschläge...' : mailFilter === 'closed' ? 'Noch nichts erledigt.' : 'Keine offenen Vorschläge aus dem Postfach. 📭';
+            list.appendChild(el('li', 'ek-empty', text));
+          }
+          for (const m of visible) list.appendChild(renderSuggestion(m));
+          root.appendChild(list);
+        }
+
+        function renderOrders() {
           if (error) {
             root.appendChild(el('p', 'ek-error', error));
             return;
@@ -769,10 +941,16 @@
           loading = true;
           error = '';
           render();
-          try {
-            report = await loadReport();
-          } catch (err) {
-            error = `Fehler beim Laden: ${err.message || err}`;
+          const [rep, mails] = await Promise.allSettled([loadReport(), loadSuggestions ? loadSuggestions() : Promise.resolve([])]);
+          if (rep.status === 'fulfilled') report = rep.value;
+          else error = `Fehler beim Laden: ${rep.reason && rep.reason.message ? rep.reason.message : rep.reason}`;
+          mailError = '';
+          if (mails.status === 'fulfilled') suggestions = Array.isArray(mails.value) ? mails.value : [];
+          else {
+            const msg = String(mails.reason && mails.reason.message ? mails.reason.message : mails.reason);
+            mailError = /\b404\b|PGRST20[05]|postfach_vorschlaege/.test(msg)
+              ? 'Der Postfach-Agent ist noch nicht eingerichtet (Tabelle postfach_vorschlaege fehlt).'
+              : `Fehler beim Laden: ${msg}`;
           }
           loading = false;
           render();
@@ -1759,6 +1937,14 @@ weiteren Text, ohne Markdown-Codeblock:
           if (!config) return null;
           const rows = await apiRequest('GET', 'einkauf_reports?select=*&order=created_at.desc&limit=1');
           return Array.isArray(rows) && rows.length ? rows[0] : null;
+        },
+        loadSuggestions: async () => {
+          if (!config) return [];
+          return apiRequest('GET', 'postfach_vorschlaege?select=*&order=received_at.desc.nullslast,created_at.desc&limit=200');
+        },
+        updateSuggestion: async (id, patch) => {
+          const status = ['open', 'done', 'dismissed'].includes(patch && patch.status) ? patch.status : 'open';
+          return apiRequest('PATCH', `postfach_vorschlaege?id=eq.${encodeURIComponent(id)}`, { status }, 'return=representation');
         },
         getTasks: () => tasks,
         createTask: async ({ title, description, category, priority }) => {

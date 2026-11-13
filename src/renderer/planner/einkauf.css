@@ -57,3 +57,15 @@
 .ek-task-btn { align-self: flex-start; margin-top: 4px; padding: 5px 10px; font-size: 12px; }
 .ek-task-btn:disabled { opacity: 0.6; cursor: default; }
 .view-toggle.active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+.ek-tabs { display: flex; gap: 4px; margin: 8px 0 12px; border-bottom: 1px solid var(--border); }
+.ek-tab { border: none; background: transparent; color: var(--text-muted); font-size: 13px; padding: 8px 12px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.ek-tab.active { color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
+.ek-when { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+.ek-kind-promotion { border-left-color: var(--accent); }
+.ek-kind-price_change { border-left-color: var(--ek-warn); }
+.ek-kind-delivery_date { border-left-color: var(--ek-bad); }
+.ek-kind-other { border-left-color: var(--text-muted); }
+.ek-closed { opacity: 0.6; }
+.ek-suggestion { font-size: 12.5px; padding: 6px 8px; border-radius: 8px; background: var(--bg); overflow-wrap: anywhere; }
+.ek-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.ek-quiet { color: var(--text-muted); }
