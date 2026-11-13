@@ -30,6 +30,9 @@ contextBridge.exposeInMainWorld('api', {
     submit: (croppedPngBase64) => ipcRenderer.invoke('selection:submit', croppedPngBase64),
     cancel: () => ipcRenderer.invoke('selection:cancel'),
   },
+  einkauf: {
+    latest: () => ipcRenderer.invoke('einkauf:latest'),
+  },
   calendar: {
     addEvent: (payload) => ipcRenderer.invoke('calendar:addEvent', payload),
   },

@@ -336,17 +336,79 @@
       .capture-cat-btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 600; }
       .matched-title { font-size: 14px; font-weight: 600; margin: 4px 0; padding: 8px 10px; border-radius: 9px; background: var(--bg); }
       .link-btn { border: none; background: transparent; color: var(--accent); font-size: 12.5px; text-decoration: underline; padding: 4px 0; align-self: flex-start; }
+
+      /* === Einkaufs-Dashboard (Kopie von src/renderer/planner/einkauf.css) === */
+      /* Einkaufs-Dashboard. Dieselben Regeln stehen auch in mobile/index.html. */
+      :root {
+        --ek-bad: #c2410c;
+        --ek-warn: #b45309;
+        --ek-ok: #15803d;
+        --ek-bad-bg: rgba(194, 65, 12, 0.1);
+        --ek-warn-bg: rgba(180, 83, 9, 0.1);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ek-bad: #fb923c;
+          --ek-warn: #fbbf24;
+          --ek-ok: #4ade80;
+          --ek-bad-bg: rgba(251, 146, 60, 0.14);
+          --ek-warn-bg: rgba(251, 191, 36, 0.12);
+        }
+      }
+      .einkauf-view[hidden],
+      .board[hidden] { display: none; }
+      .einkauf-view { max-width: 980px; margin: 0 auto; }
+      .ek-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .ek-title { font-size: 16px; margin: 0; }
+      .ek-head .btn { flex: 0 0 auto; width: auto; padding: 6px 10px; }
+      .ek-stand { font-size: 12px; color: var(--text-muted); margin: 4px 0 12px; }
+      .ek-stand.ek-stale { color: var(--ek-warn); font-weight: 600; }
+      .ek-error { color: var(--danger); font-size: 13px; }
+      .ek-empty { color: var(--text-muted); font-size: 13px; padding: 8px 2px; list-style: none; }
+      .ek-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+      @media (max-width: 700px) { .ek-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      .ek-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; min-width: 0; }
+      .ek-kpi-value { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+      .ek-kpi-label { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+      .ek-tone-bad .ek-kpi-value { color: var(--ek-bad); }
+      .ek-tone-warn .ek-kpi-value { color: var(--ek-warn); }
+      .ek-highlights { margin: 0 0 12px; padding: 10px 12px 10px 28px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; font-size: 13px; line-height: 1.5; }
+      .ek-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+      .ek-chip { border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); border-radius: 999px; padding: 5px 11px; font-size: 12px; cursor: pointer; }
+      .ek-chip.active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 600; }
+      .ek-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+      .ek-item { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+      .ek-sev-3 { border-left-color: var(--ek-bad); }
+      .ek-sev-2 { border-left-color: var(--ek-warn); }
+      .ek-sev-1 { border-left-color: var(--text-muted); }
+      .ek-item-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+      .ek-order { font-weight: 700; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+      .ek-supplier { font-size: 13px; color: var(--text-muted); }
+      .ek-change { font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 1px 7px; margin-left: auto; }
+      .ek-change-new { background: var(--accent); color: var(--accent-contrast); }
+      .ek-change-worse { background: var(--ek-bad-bg); color: var(--ek-bad); }
+      .ek-change-better { color: var(--ek-ok); border: 1px solid currentColor; }
+      .ek-article { font-size: 13px; overflow-wrap: anywhere; }
+      .ek-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; }
+      .ek-problem { font-weight: 600; }
+      .ek-days { color: var(--ek-bad); font-weight: 600; font-variant-numeric: tabular-nums; }
+      .ek-muted { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+      .ek-note { font-size: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
+      .ek-task-btn { align-self: flex-start; margin-top: 4px; padding: 5px 10px; font-size: 12px; }
+      .ek-task-btn:disabled { opacity: 0.6; cursor: default; }
+      .view-toggle.active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
     </style>
   </head>
   <body>
     <header>
       <h1>Aufgabenplaner</h1>
+      <button id="einkaufToggleBtn" class="icon-btn view-toggle" title="Einkaufs-Dashboard anzeigen">📦</button>
       <button id="doneToggleBtn" class="icon-btn" title="Erledigte Aufgaben anzeigen">✅ <span class="count" id="countDone">0</span></button>
       <button id="seriesToggleBtn" class="icon-btn" title="Serien anzeigen">🔁 <span class="count" id="countSeries">0</span></button>
       <button id="settingsBtn" class="icon-btn" title="Einstellungen">⚙</button>
     </header>
 
-    <main>
+    <main id="tasksView">
       <input type="search" id="searchInput" class="search-input" placeholder="🔍 Suchen..." />
       <button id="captureBtn" class="capture-btn">📸 Aufgabe aus Foto erfassen</button>
       <input type="file" id="photoInput" accept="image/*" hidden />
@@ -386,6 +448,8 @@
 
       <p class="hint" id="hint"></p>
     </main>
+
+    <main class="einkauf-view" id="einkaufView" hidden></main>
 
     <div id="doneBackdrop" class="done-backdrop"></div>
     <aside id="doneDrawer" class="done-drawer">
@@ -495,6 +559,230 @@
       </div>
     </dialog>
 
+    <script>
+      // === Einkaufs-Dashboard (Kopie von src/renderer/planner/einkauf.js) ===
+      // Einkaufs-Dashboard: zeigt den neuesten Bericht des KI-Agenten
+      // "Einkaufs-Analyst" (Tabelle public.einkauf_reports) an.
+      //
+      // Diese Datei ist bewusst unabhaengig von Electron: dieselbe Funktion steckt
+      // 1:1 auch in mobile/index.html. Aenderungen bitte an beiden Stellen machen.
+      //
+      // Alle Inhalte vom Agenten werden per textContent gesetzt (nie innerHTML).
+
+      function createEinkaufDashboard({ root, loadReport, getTasks, createTask }) {
+        const PROBLEMS = {
+          overdue: { label: 'Überfällig', icon: '⏰' },
+          unconfirmed: { label: 'Nicht bestätigt', icon: '❔' },
+          date_mismatch: { label: 'Termin ≠ Wunsch', icon: '📅' },
+          partial: { label: 'Teillieferung', icon: '📦' },
+          price: { label: 'Preis', icon: '💶' },
+        };
+        const CHANGES = { new: 'NEU', worse: 'schlimmer', better: 'besser' };
+        const eur = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+        const num = new Intl.NumberFormat('de-DE');
+
+        let report = null;
+        let filter = 'all';
+        let error = '';
+        let loading = false;
+
+        function el(tag, className, text) {
+          const node = document.createElement(tag);
+          if (className) node.className = className;
+          if (text !== undefined && text !== null) node.textContent = String(text);
+          return node;
+        }
+
+        function formatDateTime(value) {
+          if (!value) return '';
+          const d = new Date(value);
+          if (Number.isNaN(d.getTime())) return '';
+          return d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatDate(value) {
+          if (!value) return '';
+          const d = new Date(value);
+          if (Number.isNaN(d.getTime())) return String(value);
+          return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function items() {
+          return Array.isArray(report && report.items) ? report.items.filter((i) => i && typeof i === 'object') : [];
+        }
+
+        function sortItems(list) {
+          return list.slice().sort((a, b) => {
+            const sev = (Number(b.severity) || 0) - (Number(a.severity) || 0);
+            if (sev) return sev;
+            const days = (Number(b.days_overdue) || 0) - (Number(a.days_overdue) || 0);
+            if (days) return days;
+            return (Number(b.open_value_eur) || 0) - (Number(a.open_value_eur) || 0);
+          });
+        }
+
+        function taskTitleFor(item) {
+          const problem = PROBLEMS[item.problem] ? PROBLEMS[item.problem].label : item.problem || 'Problem';
+          const days = Number(item.days_overdue) > 0 ? ` (${item.days_overdue} Tage)` : '';
+          return `${item.order || '?'} – ${item.supplier || 'Lieferant'}: ${problem}${days}`.slice(0, 200);
+        }
+
+        function existingTaskFor(item) {
+          if (!item.order) return null;
+          const order = String(item.order).toLowerCase();
+          return (getTasks() || []).find((t) => t.status !== 'done' && String(t.title || '').toLowerCase().includes(order)) || null;
+        }
+
+        function kpi(label, value, tone) {
+          const tile = el('div', 'ek-kpi' + (tone ? ` ek-tone-${tone}` : ''));
+          tile.appendChild(el('div', 'ek-kpi-value', value));
+          tile.appendChild(el('div', 'ek-kpi-label', label));
+          return tile;
+        }
+
+        function renderItem(item) {
+          const card = el('li', `ek-item ek-sev-${Math.min(3, Math.max(1, Number(item.severity) || 1))}`);
+
+          const head = el('div', 'ek-item-head');
+          head.appendChild(el('span', 'ek-order', item.order || '—'));
+          head.appendChild(el('span', 'ek-supplier', item.supplier || ''));
+          if (CHANGES[item.change]) head.appendChild(el('span', `ek-change ek-change-${item.change}`, CHANGES[item.change]));
+          card.appendChild(head);
+
+          if (item.article) card.appendChild(el('div', 'ek-article', item.article));
+
+          const meta = el('div', 'ek-meta');
+          const p = PROBLEMS[item.problem];
+          meta.appendChild(el('span', 'ek-problem', p ? `${p.icon} ${p.label}` : item.problem || 'Problem'));
+          if (Number(item.days_overdue) > 0) meta.appendChild(el('span', 'ek-days', `${item.days_overdue} Tage`));
+          if (item.due_date) meta.appendChild(el('span', 'ek-muted', `Termin ${formatDate(item.due_date)}`));
+          if (Number(item.open_value_eur) > 0) meta.appendChild(el('span', 'ek-muted', `offen ${eur.format(Number(item.open_value_eur))}`));
+          card.appendChild(meta);
+
+          if (item.note) card.appendChild(el('div', 'ek-note', item.note));
+
+          const existing = existingTaskFor(item);
+          const btn = el('button', 'btn ek-task-btn', existing ? '✓ Aufgabe vorhanden' : '+ Aufgabe');
+          btn.type = 'button';
+          btn.disabled = Boolean(existing);
+          btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            btn.textContent = 'Wird angelegt...';
+            try {
+              const lines = [
+                item.article ? `Artikel: ${item.article}` : '',
+                item.due_date ? `Termin: ${formatDate(item.due_date)}` : '',
+                Number(item.open_value_eur) > 0 ? `Offener Wert: ${eur.format(Number(item.open_value_eur))}` : '',
+                item.note || '',
+                '(aus dem Einkaufs-Dashboard)',
+              ].filter(Boolean);
+              await createTask({
+                title: taskTitleFor(item),
+                description: lines.join('\n'),
+                category: 'today',
+                priority: Math.min(3, Math.max(1, Number(item.severity) || 2)),
+              });
+              btn.textContent = '✓ Aufgabe vorhanden';
+            } catch (err) {
+              btn.disabled = false;
+              btn.textContent = `Fehler: ${err.message || err}`;
+            }
+          });
+          card.appendChild(btn);
+          return card;
+        }
+
+        function render() {
+          root.innerHTML = '';
+
+          const head = el('div', 'ek-head');
+          head.appendChild(el('h2', 'ek-title', '📦 Einkauf – offene Bestellungen'));
+          const refresh = el('button', 'btn btn-ghost', loading ? '…' : '⟳');
+          refresh.type = 'button';
+          refresh.title = 'Neu laden';
+          refresh.addEventListener('click', () => load());
+          head.appendChild(refresh);
+          root.appendChild(head);
+
+          if (error) {
+            root.appendChild(el('p', 'ek-error', error));
+            return;
+          }
+          if (!report) {
+            root.appendChild(
+              el('p', 'ek-empty', loading ? 'Lade Bericht...' : 'Noch kein Bericht vom Einkaufs-Agenten da. Er schreibt werktags gegen 7:05 einen neuen.')
+            );
+            return;
+          }
+
+          const created = new Date(report.created_at);
+          const ageHours = (Date.now() - created.getTime()) / 36e5;
+          const stand = el('p', 'ek-stand' + (ageHours > 30 ? ' ek-stale' : ''));
+          stand.textContent =
+            `Stand: ${formatDateTime(report.created_at)}` +
+            (report.data_as_of ? ` · xentral-Daten von ${formatDateTime(report.data_as_of)}` : '') +
+            (ageHours > 30 ? ' · ⚠ älter als ein Tag – ist der Agent gelaufen?' : '');
+          root.appendChild(stand);
+
+          const s = report.summary && typeof report.summary === 'object' ? report.summary : {};
+          const kpis = el('div', 'ek-kpis');
+          const n = (v) => (Number.isFinite(Number(v)) ? num.format(Number(v)) : '–');
+          kpis.appendChild(kpi('Überfällige Positionen', n(s.overdue_positions), Number(s.overdue_positions) > 0 ? 'bad' : ''));
+          kpis.appendChild(kpi('Betroffene Bestellungen', n(s.overdue_orders), ''));
+          kpis.appendChild(kpi('Überfälliger Wert', Number.isFinite(Number(s.overdue_value_eur)) ? eur.format(Number(s.overdue_value_eur)) : '–', ''));
+          kpis.appendChild(kpi('Nicht bestätigt', n(s.unconfirmed_orders), Number(s.unconfirmed_orders) > 0 ? 'warn' : ''));
+          root.appendChild(kpis);
+
+          const highlights = Array.isArray(report.highlights) ? report.highlights.filter((h) => typeof h === 'string' && h.trim()) : [];
+          if (highlights.length) {
+            const box = el('ul', 'ek-highlights');
+            for (const h of highlights.slice(0, 6)) box.appendChild(el('li', '', h));
+            root.appendChild(box);
+          }
+
+          const all = items();
+          const chips = el('div', 'ek-chips');
+          const chipDefs = [['all', 'Alle', all.length]].concat(
+            Object.keys(PROBLEMS)
+              .map((key) => [key, `${PROBLEMS[key].icon} ${PROBLEMS[key].label}`, all.filter((i) => i.problem === key).length])
+              .filter(([, , count]) => count > 0)
+          );
+          for (const [key, label, count] of chipDefs) {
+            const chip = el('button', 'ek-chip' + (filter === key ? ' active' : ''), `${label} ${count}`);
+            chip.type = 'button';
+            chip.addEventListener('click', () => {
+              filter = key;
+              render();
+            });
+            chips.appendChild(chip);
+          }
+          root.appendChild(chips);
+
+          const visible = sortItems(filter === 'all' ? all : all.filter((i) => i.problem === filter));
+          const list = el('ul', 'ek-list');
+          if (!visible.length) list.appendChild(el('li', 'ek-empty', 'Keine Auffälligkeiten – alles im grünen Bereich. 🎉'));
+          for (const item of visible) list.appendChild(renderItem(item));
+          root.appendChild(list);
+        }
+
+        async function load() {
+          loading = true;
+          error = '';
+          render();
+          try {
+            report = await loadReport();
+          } catch (err) {
+            error = `Fehler beim Laden: ${err.message || err}`;
+          }
+          loading = false;
+          render();
+        }
+
+        return { load, render };
+      }
+
+      if (typeof module !== 'undefined') module.exports = { createEinkaufDashboard };
+    </script>
     <script>
       const STORAGE_KEY = 'aufgabenplaner.supabase';
 
@@ -1460,6 +1748,40 @@ weiteren Text, ohne Markdown-Codeblock:
       document.getElementById('captureDiscardBtn').addEventListener('click', () => captureDialog.close());
       document.getElementById('captureErrorCloseBtn').addEventListener('click', () => captureDialog.close());
       document.getElementById('captureDuplicateCloseBtn').addEventListener('click', () => captureDialog.close());
+
+      // Einkaufs-Dashboard (Bericht des KI-Agenten) als zweite Ansicht.
+      const tasksView = document.getElementById('tasksView');
+      const einkaufView = document.getElementById('einkaufView');
+      const einkaufToggleBtn = document.getElementById('einkaufToggleBtn');
+      const einkauf = createEinkaufDashboard({
+        root: einkaufView,
+        loadReport: async () => {
+          if (!config) return null;
+          const rows = await apiRequest('GET', 'einkauf_reports?select=*&order=created_at.desc&limit=1');
+          return Array.isArray(rows) && rows.length ? rows[0] : null;
+        },
+        getTasks: () => tasks,
+        createTask: async ({ title, description, category, priority }) => {
+          const payload = { title, description, category, priority, status: 'open', source: 'manual', steps: [] };
+          const result = await apiRequest('POST', 'tasks', payload, 'return=representation');
+          const created = Array.isArray(result) ? result[0] : result;
+          tasks.push(created);
+          renderAll();
+          return created;
+        },
+      });
+
+      function showEinkauf(show) {
+        einkaufView.hidden = !show;
+        tasksView.hidden = show;
+        einkaufToggleBtn.classList.toggle('active', show);
+        if (show) einkauf.load();
+      }
+
+      einkaufToggleBtn.addEventListener('click', () => showEinkauf(einkaufView.hidden));
+      window.addEventListener('focus', () => {
+        if (!einkaufView.hidden) einkauf.load();
+      });
 
       config = loadConfig();
       if (!config) {

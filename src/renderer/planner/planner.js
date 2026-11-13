@@ -579,7 +579,35 @@ document.getElementById('settingsBtn').addEventListener('click', () => {
   window.api.openSettingsWindow();
 });
 
+// Einkaufs-Dashboard (Bericht des KI-Agenten) als zweite Ansicht neben dem Board.
+const boardEl = document.querySelector('main.board');
+const einkaufView = document.getElementById('einkaufView');
+const einkaufToggleBtn = document.getElementById('einkaufToggleBtn');
+const einkauf = createEinkaufDashboard({
+  root: einkaufView,
+  loadReport: () => window.api.einkauf.latest(),
+  getTasks: () => tasks,
+  createTask: async (payload) => {
+    const created = await window.api.tasks.create(payload);
+    tasks.push(created);
+    renderAll();
+    return created;
+  },
+});
+
+function showEinkauf(show) {
+  einkaufView.hidden = !show;
+  boardEl.hidden = show;
+  einkaufToggleBtn.classList.toggle('active', show);
+  if (show) einkauf.load();
+}
+
+einkaufToggleBtn.addEventListener('click', () => showEinkauf(einkaufView.hidden));
+
 window.api.tasks.onChanged(() => loadTasks());
-window.addEventListener('focus', () => loadTasks());
+window.addEventListener('focus', () => {
+  loadTasks();
+  if (!einkaufView.hidden) einkauf.load();
+});
 
 loadTasks();

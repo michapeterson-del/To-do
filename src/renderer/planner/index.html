@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <title>Aufgabenplaner</title>
     <link rel="stylesheet" href="planner.css" />
+    <link rel="stylesheet" href="einkauf.css" />
   </head>
   <body>
     <header class="topbar">
@@ -13,6 +14,7 @@
         <button id="captureBtn" class="btn btn-primary" title="Screenshot analysieren und Aufgabe erfassen">
           📸 Aufgabe jetzt erfassen
         </button>
+        <button id="einkaufToggleBtn" class="btn btn-ghost view-toggle" title="Einkaufs-Dashboard anzeigen">📦 Einkauf</button>
         <button id="doneToggleBtn" class="btn btn-ghost" title="Erledigte Aufgaben anzeigen">
           ✅ Erledigt <span class="count" id="countDone">0</span>
         </button>
@@ -59,6 +61,8 @@
       </section>
     </main>
 
+    <main class="einkauf-view" id="einkaufView" hidden style="padding: 16px 24px"></main>
+
     <p class="hint" id="hint"></p>
 
     <div id="doneBackdrop" class="done-backdrop"></div>
@@ -80,6 +84,7 @@
       <ul class="task-list" id="listSeries"></ul>
     </aside>
 
+    <script src="einkauf.js"></script>
     <script src="planner.js"></script>
   </body>
 </html>

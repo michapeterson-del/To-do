@@ -1,6 +1,6 @@
 const { ipcMain } = require('electron');
 const { readConfig, writeConfig, isConfigured } = require('./config-store');
-const { listTasks, createTask, updateTask, deleteTask } = require('./supabase-rest');
+const { listTasks, createTask, updateTask, deleteTask, latestEinkaufReport } = require('./supabase-rest');
 const { closeCaptureWindow, getPlannerWindow, createSettingsWindow, closeSelectionWindow } = require('./windows');
 const { runCaptureFlow, analyzeRegionAndShowResult } = require('./capture-flow');
 const { addCalendarEvent } = require('./calendar');
@@ -38,6 +38,12 @@ function registerIpcHandlers({ registerHotkey }) {
     const config = readConfig();
     await deleteTask(config, id);
     return null;
+  });
+
+  ipcMain.handle('einkauf:latest', async () => {
+    const config = readConfig();
+    if (!isConfigured(config)) return null;
+    return latestEinkaufReport(config);
   });
 
   ipcMain.handle('capture:trigger', () => {

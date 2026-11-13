@@ -1,0 +1,59 @@
+/* Einkaufs-Dashboard. Dieselben Regeln stehen auch in mobile/index.html. */
+:root {
+  --ek-bad: #c2410c;
+  --ek-warn: #b45309;
+  --ek-ok: #15803d;
+  --ek-bad-bg: rgba(194, 65, 12, 0.1);
+  --ek-warn-bg: rgba(180, 83, 9, 0.1);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ek-bad: #fb923c;
+    --ek-warn: #fbbf24;
+    --ek-ok: #4ade80;
+    --ek-bad-bg: rgba(251, 146, 60, 0.14);
+    --ek-warn-bg: rgba(251, 191, 36, 0.12);
+  }
+}
+.einkauf-view[hidden],
+.board[hidden] { display: none; }
+.einkauf-view { max-width: 980px; margin: 0 auto; }
+.ek-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ek-title { font-size: 16px; margin: 0; }
+.ek-head .btn { flex: 0 0 auto; width: auto; padding: 6px 10px; }
+.ek-stand { font-size: 12px; color: var(--text-muted); margin: 4px 0 12px; }
+.ek-stand.ek-stale { color: var(--ek-warn); font-weight: 600; }
+.ek-error { color: var(--danger); font-size: 13px; }
+.ek-empty { color: var(--text-muted); font-size: 13px; padding: 8px 2px; list-style: none; }
+.ek-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+@media (max-width: 700px) { .ek-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ek-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; min-width: 0; }
+.ek-kpi-value { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.ek-kpi-label { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+.ek-tone-bad .ek-kpi-value { color: var(--ek-bad); }
+.ek-tone-warn .ek-kpi-value { color: var(--ek-warn); }
+.ek-highlights { margin: 0 0 12px; padding: 10px 12px 10px 28px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; font-size: 13px; line-height: 1.5; }
+.ek-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.ek-chip { border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); border-radius: 999px; padding: 5px 11px; font-size: 12px; cursor: pointer; }
+.ek-chip.active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 600; }
+.ek-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+.ek-item { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ek-sev-3 { border-left-color: var(--ek-bad); }
+.ek-sev-2 { border-left-color: var(--ek-warn); }
+.ek-sev-1 { border-left-color: var(--text-muted); }
+.ek-item-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ek-order { font-weight: 700; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.ek-supplier { font-size: 13px; color: var(--text-muted); }
+.ek-change { font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 1px 7px; margin-left: auto; }
+.ek-change-new { background: var(--accent); color: var(--accent-contrast); }
+.ek-change-worse { background: var(--ek-bad-bg); color: var(--ek-bad); }
+.ek-change-better { color: var(--ek-ok); border: 1px solid currentColor; }
+.ek-article { font-size: 13px; overflow-wrap: anywhere; }
+.ek-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; }
+.ek-problem { font-weight: 600; }
+.ek-days { color: var(--ek-bad); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ek-muted { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.ek-note { font-size: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
+.ek-task-btn { align-self: flex-start; margin-top: 4px; padding: 5px 10px; font-size: 12px; }
+.ek-task-btn:disabled { opacity: 0.6; cursor: default; }
+.view-toggle.active { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
