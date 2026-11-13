@@ -68,6 +68,7 @@ async function createTask(config, task) {
     event_datetime: task.event_datetime || null,
     event_title: task.event_title || null,
   };
+  if ([1, 2, 3].includes(task.priority)) payload.priority = task.priority;
   const result = await request(config, 'POST', 'tasks', payload, 'return=representation');
   return Array.isArray(result) ? result[0] : result;
 }
@@ -81,4 +82,10 @@ async function deleteTask(config, id) {
   await request(config, 'DELETE', `tasks?id=eq.${encodeURIComponent(id)}`);
 }
 
-module.exports = { listTasks, createTask, updateTask, deleteTask };
+// Neuester Bericht des Einkaufs-Agenten (Tabelle einkauf_reports) oder null.
+async function latestEinkaufReport(config) {
+  const rows = await request(config, 'GET', 'einkauf_reports?select=*&order=created_at.desc&limit=1');
+  return Array.isArray(rows) && rows.length ? rows[0] : null;
+}
+
+module.exports = { listTasks, createTask, updateTask, deleteTask, latestEinkaufReport };
