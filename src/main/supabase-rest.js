@@ -88,4 +88,23 @@ async function latestEinkaufReport(config) {
   return Array.isArray(rows) && rows.length ? rows[0] : null;
 }
 
-module.exports = { listTasks, createTask, updateTask, deleteTask, latestEinkaufReport };
+// Vorschlaege des Postfach-Agenten: alle offenen plus die zuletzt erledigten.
+async function listPostfachVorschlaege(config) {
+  return request(config, 'GET', 'postfach_vorschlaege?select=*&order=received_at.desc.nullslast,created_at.desc&limit=200');
+}
+
+async function updatePostfachVorschlag(config, id, patch) {
+  const allowed = ['open', 'done', 'dismissed'].includes(patch && patch.status) ? { status: patch.status } : {};
+  const result = await request(config, 'PATCH', `postfach_vorschlaege?id=eq.${encodeURIComponent(id)}`, allowed, 'return=representation');
+  return Array.isArray(result) ? result[0] : result;
+}
+
+module.exports = {
+  listTasks,
+  createTask,
+  updateTask,
+  deleteTask,
+  latestEinkaufReport,
+  listPostfachVorschlaege,
+  updatePostfachVorschlag,
+};

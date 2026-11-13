@@ -33,6 +33,10 @@ contextBridge.exposeInMainWorld('api', {
   einkauf: {
     latest: () => ipcRenderer.invoke('einkauf:latest'),
   },
+  postfach: {
+    list: () => ipcRenderer.invoke('postfach:list'),
+    update: (id, patch) => ipcRenderer.invoke('postfach:update', { id, patch }),
+  },
   calendar: {
     addEvent: (payload) => ipcRenderer.invoke('calendar:addEvent', payload),
   },

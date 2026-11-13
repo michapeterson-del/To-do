@@ -586,6 +586,8 @@ const einkaufToggleBtn = document.getElementById('einkaufToggleBtn');
 const einkauf = createEinkaufDashboard({
   root: einkaufView,
   loadReport: () => window.api.einkauf.latest(),
+  loadSuggestions: () => window.api.postfach.list(),
+  updateSuggestion: (id, patch) => window.api.postfach.update(id, patch),
   getTasks: () => tasks,
   createTask: async (payload) => {
     const created = await window.api.tasks.create(payload);
